@@ -1,36 +1,45 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Bazaar.ly
 
-## Getting Started
+Provide a feature-rich, user-friendly platform enabling businesses—both small and large—to efficiently manage e-commerce operations. The platform focuses on simplicity for users with little technical knowledge while offering scalability for larger businesses.
+ to launch the platform quickly while ensuring functionality and usability.
 
-First, run the development server:
+## **Key Features:**
+1. **Business Dashboard**:
+    - Overview of orders, transactions, and customer stats.
+    - Real-time sales metrics (e.g., total sales, orders, etc.).
+   
+2. **Storefront Creation:**
+    - Basic storefront editor (drag-and-drop or simple template-based).
+    - Responsive design (optimized for desktop and mobile).
+    - Domain linking for custom domains (e.g., "mybusiness.bazaar.ly").
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+3. **Order Management:**
+    - View, filter, and search orders by status (pending, shipped, delivered).
+    - Update order statuses.
+    - Downloadable order reports (CSV format).
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+4. **Transaction Management:**
+    - Integration with local Nepali payment systems (eSewa, Khalti).
+    - Sales analytics and payment history.
+   
+5. **Delivery System Integration:**
+    - Track deliveries through partnered courier services.
+    - Update shipping information.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+6. **Customer Insights:**
+    - Basic customer database (name, contact info, purchase history).
+    - Identify repeat customers and high-value orders.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+7. **Authentication & Security:**
+    - User registration and login (email/password or social login).
+    - Multi-tenancy: Each user manages their own storefront/dashboard.
+    - Basic encryption for sensitive data.
 
-## Learn More
+8. **Advanced Storefront Editor:**
+    - Customizable templates with more components (carousels, grids, etc.).
+    - Integration with AI tools to generate product descriptions or suggest design elements.
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+9. **Marketing Tools:**
+    - Automated email campaigns and SMS notifications.
+    - Social media integration for product promotions.
+    - Discount code management.
