@@ -8,6 +8,11 @@ export default {
   ],
   theme: {
     extend: {
+      fontFamily: {
+        cutive: ['"Cutive"', 'serif'],
+        work: ['"Work Sans"', 'sans-serif'],
+        sans: ['Arial', 'Helvetica', 'sans-serif'], 
+      },
       colors: {
         background: "var(--background)",
         foreground: "var(--foreground)",
