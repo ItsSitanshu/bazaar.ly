@@ -10,8 +10,10 @@
   --black: #000000;
   --foreground: #eeeeee;
   --link-water: #cbdceb;
+  --white: #ffffff;
   --bunting: #201e43;
   --bay-of-many: #133e87;
+  --smth: #D91A52;
 }
 
 @media (prefers-color-scheme: dark) {
