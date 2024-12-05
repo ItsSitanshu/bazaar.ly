@@ -26,7 +26,7 @@ const AuthLoginForm: FC = () => {
       });
 
       if (error) {
-        setError(error.message);
+        setError((error.message).charAt(0).toUpperCase() + (error.message).slice(1));
       } else if (data.user) {
         setSuccess("Sign in successful!");
         router.push('/');
