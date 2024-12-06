@@ -3,6 +3,7 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import DashboardSideBar from './components/DashboardSideBar';
 
 const supabase = createClientComponentClient();
 
@@ -32,11 +33,13 @@ export default function Home() {
 
 
   return (
-    <div>
+    <div className='flex w-screen h-screen'>
       {user ? (
         <p>Welcome {user.email}</p>
       ) : (
-        <p>Please log in to access the protected content.</p>
+        <div className='flex w-screen h-screen'>
+        <DashboardSideBar/>
+        </div>
       )}
     </div>
   );

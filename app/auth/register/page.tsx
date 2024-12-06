@@ -5,9 +5,13 @@ import Image from "next/image";
 import AuthButton from "@/app/components/AuthButton";
 import AuthForm from "@/app/components/AuthForm";
 
+import { useState } from "react";
+
 export default function Register() {
+    const [rotation, setRotation] = useState<number>(0);
+
     return (
-        <div className=" flex h-screen w-screen justify-center items-center">
+        <div className=" flex h-screen w-screen justify-center items-center" onClick={() => setRotation((prevRotation) => prevRotation + 90)}>>
         <div className="flex flex-row justify-start w-10/12 h-5/6 bg-stone-950 rounded-3xl">
             <div className="w-1/2 h-full relative flex flex-col items-center justify-center rounded-l-3xl z-0" style={{
                 background: `radial-gradient(100% 80% at 1% 1%, var(--bunting) -100%, var(--black) 30%, var(--bunting) 100%, var(--white) 200%)`,
@@ -18,7 +22,16 @@ export default function Register() {
                 <h1 className="text-white text-5xl font-work uppercase font-bold">Get started with </h1>
                 <div className="flex flex-row">
                     <h1 className="text-white text-6xl font-work uppercase font-bold hover:text-white/60 tansition duration-300 ease-in-out">Bazaar.ly</h1>
-                    <Image aria-hidden src="/logo.svg" alt="File icon" width={32} height={32} className="ml-2"/>
+                    <Image aria-hidden 
+                        src="/logo.svg"
+                        alt="File icon"
+                        width={32}
+                        height={32}
+                        className={`ml-2 transition-transform duration-300`}
+                        style={{
+                            transform: `rotate(${rotation}deg)` 
+                        }}
+                    />
                 </div>
                 <p className="text-white/[.5] font-cutive text-sm text-thin">build your bazaar, the you way</p>
             </div>

@@ -24,7 +24,7 @@ const AuthLoginForm: FC = () => {
         email: email,
         password: password,
       });
-
+      
       if (error) {
         setError((error.message).charAt(0).toUpperCase() + (error.message).slice(1));
       } else if (data.user) {
