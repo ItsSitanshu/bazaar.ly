@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import DashboardSideBar from './components/DashboardSideBar';
 
-const supabase = createClientComponentClient();
+const supabaseAuth = createClientComponentClient();
 
 export default function Home() {
   const router = useRouter();
@@ -13,18 +13,17 @@ export default function Home() {
   
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session } } = await supabaseAuth.auth.getSession();
       setUser(session?.user ?? null);
     };
 
     fetchSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
+    const { data: authListener } = supabaseAuth.auth.onAuthStateChange(
       (event: any, session: any) => {
         setUser(session?.user ?? null);
       }
     );
-
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -38,7 +37,7 @@ export default function Home() {
         <p>Welcome {user.email}</p>
       ) : (
         <div className='flex w-screen h-screen'>
-        <DashboardSideBar/>
+        <DashboardSideBar name={user.id}/>
         </div>
       )}
     </div>
