@@ -5,11 +5,24 @@ const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 
 export const supabase = createClient(supabaseUrl, supabaseKey);
 
-export const getSession = async () => {
-  const { data: { session }, error } = await supabase.auth.getSession();
-  if (error) {
-    console.error('Error getting session:', error.message);
-  } else {
-    console.log('Session:', session);
+const fetchStores = async (supabase: any, userId: string, setStore: any) => {
+  if (!userId) return;
+
+  try {
+    const { data: stores, error } = await supabase
+      .from('store')
+      .select('store_name, store_phone, logo_url, description, subdomain')
+      .eq('user_id', userId);
+
+    if (error) {
+      console.error('Error fetching stores:', error.message);
+      setStore(null);
+    } else {
+      setStore(stores[0]);
+    }
+  } catch (error: any) {
+    console.error('Error in fetchStores:', error.message);
   }
 };
+
+export { fetchStores };

@@ -3,244 +3,160 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { useState, useEffect } from 'react';
 import DashboardSideBar from '../components/DashboardSideBar';
+import Link from 'next/link';
+import Image from 'next/image';
+
+import check from '@/app/assets/images/check.svg';
+import not_check from '@/app/assets/images/not_check.svg';
+import current from '@/app/assets/images/current_check.svg';
+
+import { fetchStores } from '@/app/lib/supabase';
+import StoreForm from '../components/StoreForm';
 
 const supabase = createClientComponentClient();
 
-interface StoreFormInterface {
-  storeName: string;
-  storePhone: string;
-  logo: File | null;
-  description: string;
-  subdomain: string;
-}
 
-export default function CreateStore() {
-  const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState<StoreFormInterface>({
-    storeName: '',
-    storePhone: '',
-    logo: null,
-    description: '',
-    subdomain: '',
-  });
+export default function Dashboard() {
+  const [step, setStep] = useState(0);
+  const [canContinue, setCanContinue] = useState<boolean>(false);
+
+  const steps = ["Create an Account", "Build a Business Profile", "Watch a video",
+  "Set your theme", "Pick a plan", "Billing"];
+
 
   const [user, setUser] = useState<any>(null);
+  const [store, setStore] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 
-  const handleNext = () => {
-    if (step < 5) setStep(step + 1);
-  };
+  const determineStep = () => {
+    if (!user) {
+      setStep(1);
+      return;
+    }
 
-  const handlePrevious = () => {
-    if (step > 1) setStep(step - 1);
-  };
+    if (!store) {
+      setStep(2);
+      return
+    }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+    setStep(3);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0] || null;
-    setFormData((prev) => ({ ...prev, logo: file }));
-  };
+    if (store.theme) {
+      setStep(4);
+      return;
+    }
+
+    if (store.pricing) {
+      setStep(5);
+    }
+
+    if (user.billing) {
+      setStep(6);
+    }
+  }
 
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        fetchStores(supabase, session?.user?.id as string, setStore);
+        setUser(session?.user ?? null);
+      } catch (error: any) {
+        console.error('Error fetching session:', error.message);
+      }
     };
 
     fetchSession();
 
-    const { data: authListener } = supabase.auth.onAuthStateChange(
-      (event: any, session: any) => {
-        setUser(session?.user ?? null);
-      }
-    );
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
 
     return () => {
       authListener.subscription.unsubscribe();
     };
   }, []);
 
-  const handleSubmit = async () => {
-    if (!user) {
-      alert('Please log in first.');
-      return;
+  useEffect(() => {
+    if (user) {
+      fetchStores(supabase, user.id as string, setStore);
+    } else {
+      setStore(null);
     }
+  }, [user]);
+
+  useEffect(() => {
+    determineStep();
+    
+  })
 
 
-
-    setLoading(true); 
-
-    try {
-      let logoUrl = '';
-
-      if (formData.logo) {
-        const { data, error } = await supabase.storage
-          .from('logos')
-          .upload(`${user.id}${formData.logo.name}`, formData.logo, {
-            upsert: true,
-            contentType: formData.logo.type,
-          });
-
-        if (error) {
-          throw new Error('Error uploading logo: ' + error.message);
-        }
-
-        logoUrl = data?.path ?? '';
-      }
-
-      const { error: insertError } = await supabase
-        .from('store')
-        .insert([
-          {
-            store_name: formData.storeName,
-            store_phone: formData.storePhone,
-            logo_url: logoUrl,
-            description: formData.description,
-            subdomain: formData.subdomain,
-            user_id: user.id,
-          },
-        ]);
-
-
-      if (insertError) {
-        throw new Error('Error creating store: ' + insertError.message);
-      }
-
-      console.log('Store created successfully!');
-      alert('Store created successfully!');
-    } catch (error: any) {
-      console.error(error.message);
-      alert('An error occurred: ' + error.message);
-    } finally {
-      setLoading(false); 
-    }
-  };
 
   return (
     <>
       {user ? (
         <div className="flex h-screen w-screen justify-start items-center">
-        <DashboardSideBar shopName={user.id} currentPage='Home'/> 
+          {canContinue ? (
+            <>
+            <DashboardSideBar shopName={store.store_name} currentPage="Home" />
+            <h1>{store.store_name}</h1>
+            </>
+          ) : (
+            <>
+            <DashboardSideBar shopName={store ? store.store_name : user.id} currentPage="Home" />
+            <div className="flex flex-col w-full h-full justify-center items-center">
+              <div className="flex flex-col w-3/5 h-4/6 pl-8 bg-stone-950 rounded-lg">
+              <div className="flex flex-row justify-between items-center h-full w-full">
+                <div className="flex flex-row w-3/12 h-full pt-16">
+                  <div className="flex flex-col items-start w-1/4 h-full">
+                    {steps.map((description, index) => (
+                      <div key={index} className="flex flex-col items-center justify-center m-0 p-o w-full">
+                        {index > 0 && (
+                          <div className="flex h-7 w-0.5 bg-[var(--lunting)] m-0 p-0"></div>
+                        )}
+
+                        <Image
+                          src={(index + 1) < step ? check : (index + 1) == step ? current : not_check}
+                          alt="Random icon"
+                          className="w-10 h-5 rounded-full p-0 m-0"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-col items-start w-3/4 h-full">
+                  {steps.map((description, index) => (
+                    <div key={index}>
+                    {index == 0 ? (
+                      <div className="text-[0.7rem] font-work pt-[0.10rem] font-light">{description}</div>
+                    ) : <div className="flex items-end w-full h-12 text-[0.7rem] font-work font-light">{description}</div>}
+                    </div>
+                  ))}
+                  </div>
+                </div>
+                {
+                  (step == 2) ?
+                  <StoreForm user={user} setStore={setStore}/>
+                  : (step == 3) ?
+                  <video width="640" height="480" controls>
+                    <source src="video.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  : (step == 4) ?
+                  <></>
+                  : (step == 5) ?
+                  <></> 
+                  : <></>
+                }
+              </div>
+              </div>
+            </div>
+            </>
+          )}
         </div>
-        //   <div className="flex flex-row justify-start w-10/12 h-5/6 bg-stone-950 rounded-3xl">
-        //     <div
-        //       className="w-1/2 h-full relative flex flex-col items-center justify-center rounded-l-3xl z-0"
-        //       style={{
-        //         background:
-        //           'radial-gradient(100% 80% at 1% 1%, var(--bunting) -100%, var(--black) 30%, var(--bunting) 100%, var(--white) 200%)',
-        //       }}
-        //     >
-        //       <h1 className="text-white text-5xl font-work uppercase font-bold">
-        //         Create Your Store
-        //       </h1>
-        //       <p className="text-white/[.5] font-cutive text-sm text-thin">
-        //         Step {step} of 5
-        //       </p>
-        //     </div>
-
-        //     <div className="w-1/2 h-full relative flex flex-col items-center justify-center z-0">
-        //       <div className="w-9/12 flex flex-col items-center justify-center pt-16">
-        //         {step === 1 && (
-        //           <>
-        //             <h2 className="text-white font-cutive text-xl mb-4">Enter your store name</h2>
-        //             <input
-        //               type="text"
-        //               name="storeName"
-        //               value={formData.storeName}
-        //               onChange={handleChange}
-        //               placeholder="Store Name"
-        //               className="w-full p-3 rounded-lg bg-stone-800 text-white"
-        //             />
-        //           </>
-        //         )}
-        //         {step === 2 && (
-        //           <>
-        //             <h2 className="text-white font-cutive text-xl mb-4">Enter your store phone number</h2>
-        //             <input
-        //               type="text"
-        //               name="storePhone"
-        //               value={formData.storePhone}
-        //               onChange={handleChange}
-        //               placeholder="Phone Number"
-        //               className="w-full p-3 rounded-lg bg-stone-800 text-white"
-        //             />
-        //           </>
-        //         )}
-        //         {step === 3 && (
-        //           <>
-        //             <h2 className="text-white font-cutive text-xl mb-4">Upload your logo</h2>
-        //             <input
-        //               type="file"
-        //               accept="image/*"
-        //               onChange={handleFileChange}
-        //               className="w-full p-3 rounded-lg bg-stone-800 text-white"
-        //             />
-        //           </>
-        //         )}
-        //         {step === 4 && (
-        //           <>
-        //             <h2 className="text-white font-cutive text-xl mb-4">Describe your store</h2>
-        //             <textarea
-        //               name="description"
-        //               value={formData.description}
-        //               onChange={handleChange}
-        //               placeholder="Store Description"
-        //               className="w-full p-3 rounded-lg bg-stone-800 text-white"
-        //             />
-        //           </>
-        //         )}
-        //         {step === 5 && (
-        //           <>
-        //             <h2 className="text-white font-cutive text-xl mb-4">Choose a subdomain</h2>
-        //             <input
-        //               type="text"
-        //               name="subdomain"
-        //               value={formData.subdomain}
-        //               onChange={handleChange}
-        //               placeholder="Subdomain"
-        //               className="w-full p-3 rounded-lg bg-stone-800 text-white"
-        //             />
-        //           </>
-        //         )}
-
-        //         <div className="flex mt-8 w-full justify-between">
-        //           {step > 1 && (
-        //             <button
-        //               onClick={handlePrevious}
-        //               className="p-3 rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition duration-200"
-        //             >
-        //               Previous
-        //             </button>
-        //           )}
-        //           {step < 5 ? (
-        //             <button
-        //               onClick={handleNext}
-        //               disabled={loading}
-        //               className="p-3 rounded-lg bg-stone-800 text-white hover:bg-stone-700 transition duration-200"
-        //             >
-        //               Next
-        //             </button>
-        //           ) : (
-        //             <button
-        //               onClick={handleSubmit}
-        //               disabled={loading}
-        //               className="p-3 rounded-lg bg-green-600 text-white hover:bg-green-500 transition duration-200"
-        //             >
-        //               {loading ? 'Submitting...' : 'Submit'}
-        //             </button>
-        //           )}
-        //         </div>
-        //       </div>
-        //     </div>
-        //   </div>
-        // </div>
       ) : (
-        <></>
-      )}
+        <>FUCKING HERE?</>
+      )}      
     </>
   );
 }

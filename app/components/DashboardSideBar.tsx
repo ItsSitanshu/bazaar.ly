@@ -36,10 +36,12 @@ const AdvOptions: Record<string, { path: string; icon: any }> = {
 };
 
 const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage }) => {
+  const storeName = shopName.toLowerCase()
+
   return (
     <div className="flex flex-col bg-stone-950 h-full pl-5 pr-4 pt-7">
       <div className="flex flex-row w-full items-center mb-4">
-        <Image src='/logo.svg' alt="File icon" width={32} height={32} className="w-10 h-10 p-1 border rounded-lg"/>
+        <Image src='/logo.svg' alt="File icon" width={32} height={32} className="w-10 h-10 p-1 rounded-lg"/>
         <h1 className="flex text-white uppercase ml-2 w-[190] font-work text-lg font-bold">
           {shopName.substring(0, 10)}
         </h1>
@@ -47,7 +49,7 @@ const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage
       <span className="font-work uppercase text-xs mb-2">General</span>
       <div className="flex flex-col w-full items-start mb-4">
         {Object.entries(Options).map(([label, { path, icon }]) => (
-          <Link href={`/dashboard/${path}`}
+          <Link href={`/dashboard/${storeName}/${path}`}
             key={path}
             className={`flex flex-row w-full items-center justify-start pl-3 mb-1 p-2 rounded-xl
             text-white hover:bg-white/5 transition ease-in-out duration-200`}
@@ -68,7 +70,7 @@ const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage
       <span className="font-work uppercase text-xs mb-2">Advanced</span>
       <div className="flex flex-col w-full items-start">
         {Object.entries(AdvOptions).map(([label, { path, icon }]) => (
-          <Link href={`/dashboard/${path}`}
+          <Link href={`/dashboard/${storeName}/${path}`}
 
             key={path}
             className={`flex flex-row w-full items-center justify-start pl-3 mb-1 p-2 rounded-xl

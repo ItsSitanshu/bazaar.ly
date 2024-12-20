@@ -1,31 +1,162 @@
-/*
-https://cdn.dribbble.com/userupload/16140667/file/original-ce4e04f6035c1fb630c493a00a5e9e56.png?resize=752x&vertical=center - ORDER DETAIL
-https://cdn.dribbble.com/userupload/16155072/file/original-1fea2ecec3251ae36d18cc9771fd7de6.png?resize=752x&vertical=center - MESSAGING
-https://cdn.dribbble.com/userupload/16186490/file/original-ac579db472d0fa6da21f9ba0385a765b.png?resize=1024x768&vertical=center - ORDERS
-https://cdn.dribbble.com/userupload/16186825/file/original-8a8a24dab504ff330efe51c5e9726dc5.png?resize=1024x768&vertical=center - UPLOAD PRODUCT
-https://cdn.dribbble.com/userupload/16093318/file/original-e9673e89950de604d6fb9b5ba2e112d9.png?resize=752x&vertical=center - STORE DASHBOARD 
-*/
 'use client';
 
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { useState, useEffect } from 'react';
+import DashboardSideBar from '@/app/components/DashboardSideBar';
+import Link from 'next/link';
+import Image from 'next/image';
 
-import Link from "next/link";
-import { useRouter } from "next/navigation";
+import check from '@/app/assets/images/check.svg';
+import not_check from '@/app/assets/images/not_check.svg';
+import current from '@/app/assets/images/current_check.svg';
 
-export default function StorePage({ params }: { params: { store: string } }) {
-    const router = useRouter();
-    const { store } = params;
+import { fetchStores } from '@/app/lib/supabase';
+import StoreForm from '@/app/components/StoreForm';
+
+const supabase = createClientComponentClient();
+
+
+export default function Dashboard() {
+  const [step, setStep] = useState(0);
+  const [canContinue, setCanContinue] = useState<boolean>(false);
+
+  const steps = ["Create an Account", "Build a Business Profile", "Watch a video",
+  "Set your theme", "Pick a plan", "Billing"];
+
+
+  const [user, setUser] = useState<any>(null);
+  const [store, setStore] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+
+  const determineStep = () => {
+    if (!user) {
+      setStep(1);
+      return;
+    }
+
+    if (!store) {
+      setStep(2);
+      return
+    }
+
+    setStep(3);
+
+    if (store.theme) {
+      setStep(4);
+      return;
+    }
+
+    if (store.pricing) {
+      setStep(5);
+    }
+
+    if (user.billing) {
+      setStep(6);
+    }
+  }
+
+  useEffect(() => {
+    const fetchSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        fetchStores(supabase, session?.user?.id as string, setStore);
+        setUser(session?.user ?? null);
+      } catch (error: any) {
+        console.error('Error fetching session:', error.message);
+      }
+    };
+
+    fetchSession();
+
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+
+    return () => {
+      authListener.subscription.unsubscribe();
+    };
+  }, []);
+
+  useEffect(() => {
+    if (user) {
+      fetchStores(supabase, user.id as string, setStore);
+    } else {
+      setStore(null);
+    }
+  }, [user]);
+
+  useEffect(() => {
+    determineStep();
     
-    return (
-        <div>
-            <h1>Dashboard for Store: {store}</h1>
-            <nav>
-                <ul>
-                    <li><Link href={`/dashboard/${store}/upload`}>Upload</Link></li>
-                    <li><Link href={`/dashboard/${store}/track-orders`}>Track Orders</Link></li>
-                    <li><Link href={`/dashboard/${store}/website`}>Website</Link></li>
-                    <li><Link href={`/dashboard/${store}/messaging`}>Messaging</Link></li>
-                </ul>
-            </nav>
+  })
+
+
+
+  return (
+    <>
+      {user ? (
+        <div className="flex h-screen w-screen justify-start items-center">
+          {canContinue ? (
+            <>
+            <DashboardSideBar shopName={store.store_name} currentPage="Home" />
+            <h1>{store.store_name}</h1>
+            </>
+          ) : (
+            <>
+            <DashboardSideBar shopName={store ? store.store_name : user.id} currentPage="Home" />
+            <div className="flex flex-col w-full h-full justify-center items-center">
+              <div className="flex flex-col w-3/5 h-4/6 pl-8 bg-stone-950 rounded-lg">
+              <div className="flex flex-row justify-between items-center h-full w-full">
+                <div className="flex flex-row w-3/12 h-full pt-16">
+                  <div className="flex flex-col items-start w-1/4 h-full">
+                    {steps.map((description, index) => (
+                      <div key={index} className="flex flex-col items-center justify-center m-0 p-o w-full">
+                        {index > 0 && (
+                          <div className="flex h-7 w-0.5 bg-[var(--lunting)] m-0 p-0"></div>
+                        )}
+
+                        <Image
+                          src={(index + 1) < step ? check : (index + 1) == step ? current : not_check}
+                          alt="Random icon"
+                          className="w-10 h-5 rounded-full p-0 m-0"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex flex-col items-start w-3/4 h-full">
+                  {steps.map((description, index) => (
+                    <div key={index}>
+                    {index == 0 ? (
+                      <div className="text-[0.7rem] font-work pt-[0.10rem] font-light">{description}</div>
+                    ) : <div className="flex items-end w-full h-12 text-[0.7rem] font-work font-light">{description}</div>}
+                    </div>
+                  ))}
+                  </div>
+                </div>
+                {
+                  (step == 2) ?
+                  <StoreForm user={user} setStore={setStore}/>
+                  : (step == 3) ?
+                  <video width="640" height="480" controls>
+                    <source src="video.mp4" type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                  : (step == 4) ?
+                  <></>
+                  : (step == 5) ?
+                  <></> 
+                  : <></>
+                }
+              </div>
+              </div>
+            </div>
+            </>
+          )}
         </div>
-    );
+      ) : (
+        <>FUCKING HERE?</>
+      )}      
+    </>
+  );
 }
