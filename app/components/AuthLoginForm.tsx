@@ -40,30 +40,30 @@ const AuthLoginForm: FC = () => {
   return (
     <div className="flex flex-col w-10/12 h-full items-center">
       <form onSubmit={handleSubmit} className="w-full">
-        <div className="flex flex-col items-center w-full h-16">
+        <div className="flex flex-col items-center w-full h-20">
           <div className="flex flex-col h-full w-full">
-            <span className="font-cutive text-[0.6rem] ml-1">Email</span>
+            <span className="font-cutive text-[0.7rem] ml-1">Email</span>
             <input
               type="email"
               placeholder="e.g. haribahadur@gmail.com"
-              className="bg-black h-full font-work text-xs rounded-lg pl-2 m-0 w-full focus:outline-none focus:border focus:border-white/40"
+              className="bg-black h-16 font-work text-[0.8rem] rounded-lg pl-3 m-0 w-full focus:outline-none focus:border focus:border-white/40 text-white"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
           </div>
         </div>
 
-        <div className="flex flex-col items-center w-full h-20 mt-3">
+        <div className="flex flex-col items-center w-full h-28 mt-3">
           <div className="flex flex-col h-full w-full">
-            <span className="font-cutive text-[0.6rem] ml-1">Password</span>
+            <span className="font-cutive text-[0.7rem] ml-1">Password</span>
             <input
               type="password"
               placeholder="e.g. sec!!rE@321"
-              className="bg-black h-full font-work text-xs rounded-lg pl-2 m-0 w-full focus:outline-none focus:border focus:border-white/40"
+              className="bg-black h-16 font-work text-[0.8rem] rounded-lg pl-3 m-0 w-full focus:outline-none focus:border focus:border-white/40"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <span className="font-work text-[0.6rem] text-white/35 ml-1">
+            <span className="font-work text-xs text-white/35 ml-1 mt-2">
               Must be at least 8 characters long, with a number and a special character.
             </span>
           </div>
@@ -87,7 +87,7 @@ const AuthLoginForm: FC = () => {
 
       <p className="text-white/[.5] font-work text-xs text-thin mt-4">
         Don't have an account?{" "}
-        <Link href='/auth/register'><span className="font-bold underline text-white" >Register</span></Link>
+        <Link href='/auth/register'><span className="font-bold text-[0.9rem] underline text-white" >Register</span></Link>
       </p>
     </div>
   );

@@ -15,6 +15,14 @@ interface StoreFormInterface {
 
 const supabase = createClientComponentClient();
 
+const logos = [
+  'https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/logos/Frame%2010.svg',
+  'https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/logos/Frame%2011.svg',
+  'https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/logos/Frame%2012.svg',
+  'https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/logos/Frame%2013.svg',
+  'https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/logos/Frame%2014.svg'
+]
+
 const StoreForm: FC<StoreFormInterface> = ({ user, setStore }) => {
   const [name, setName] = useState<string>("");
   const [phone, setPhone] = useState<string>("");
@@ -51,6 +59,7 @@ const StoreForm: FC<StoreFormInterface> = ({ user, setStore }) => {
             store_name: name,
             store_phone: 0,
             description: description,
+            logo_url: logos[Math.floor(Math.random() * logos.length)],
             subdomain: subdomain,
             emp_ty: {range_type: employeeOption},
             address: address

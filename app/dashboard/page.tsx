@@ -88,7 +88,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     determineStep();
-    
   })
 
 
@@ -99,12 +98,12 @@ export default function Dashboard() {
         <div className="flex h-screen w-screen justify-start items-center">
           {canContinue ? (
             <>
-            <DashboardSideBar shopName={store.store_name} currentPage="Home" />
+            <DashboardSideBar shopName={store.store_name} currentPage="Home" logoUrl={''}/>
             <h1>{store.store_name}</h1>
             </>
           ) : (
             <>
-            <DashboardSideBar shopName={store ? store.store_name : user.id} currentPage="Home" />
+            <DashboardSideBar shopName={store ? store.store_name : user.id} currentPage="Home" logoUrl={store ? store.logo_url : ''}/>
             <div className="flex flex-col w-full h-full justify-center items-center">
               <div className="flex flex-col w-3/5 h-4/6 pl-8 bg-stone-950 rounded-lg">
               <div className="flex flex-row justify-between items-center h-full w-full">

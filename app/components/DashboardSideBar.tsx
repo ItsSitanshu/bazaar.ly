@@ -1,7 +1,7 @@
 'use client';
 
 import Image from "next/image";
-import { FC } from "react";
+import { FC, useEffect } from "react";
 import Link from "next/link";
 
 
@@ -14,10 +14,12 @@ import settingIcon from "@/app/assets/images/sidebar_Setting.svg";
 import employeeIcon from "@/app/assets/images/sidebar_Employee.svg";
 import inventoryIcon from "@/app/assets/images/sidebar_Inventory.svg";
 import orgIcon from "@/app/assets/images/sidebar_Stores.svg";
+import questionMark from '@/app/assets/images/question_mark.svg'
 
 interface DashboardSideBarInterface {
   shopName: string;
   currentPage: string;
+  logoUrl: string;
 }
 
 const Options: Record<string, { path: string; icon: any }> = {
@@ -35,13 +37,25 @@ const AdvOptions: Record<string, { path: string; icon: any }> = {
   'Multiple Stores ': { path: "org", icon: orgIcon },
 };
 
-const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage }) => {
+const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage, logoUrl }) => {
   const storeName = shopName.toLowerCase()
+  const logo = logoUrl;
+
+  useEffect(() => {
+    console.log(logo, logoUrl);
+  })
 
   return (
     <div className="flex flex-col bg-stone-950 h-full pl-5 pr-4 pt-7">
       <div className="flex flex-row w-full items-center mb-4">
-        <Image src='/logo.svg' alt="File icon" width={32} height={32} className="w-10 h-10 p-1 rounded-lg"/>
+        {logoUrl ? (
+          <Image src={logoUrl} alt="File icon" width={32} height={32} className="w-10 h-10 p-1 rounded-lg"/>
+        ) : (
+          <div className="flex justify-center items-center w-10 h-10 p-1 rounded-full bg-transparent">
+            <Image src={questionMark} alt="File icon" width={32} height={32} className="w-8 h-8 p-1 rounded-lg"/>
+          </div>
+        ) }
+
         <h1 className="flex text-white uppercase ml-2 w-[190] font-work text-lg font-bold">
           {shopName.substring(0, 10)}
         </h1>
