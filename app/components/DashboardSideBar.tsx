@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { FC, useEffect } from "react";
 import Link from "next/link";
+import { DefaultLogos } from "@/app/components/StoreForm";
 
 
 import homeIcon from "@/app/assets/images/sidebar_Home.svg";
@@ -16,10 +17,12 @@ import inventoryIcon from "@/app/assets/images/sidebar_Inventory.svg";
 import orgIcon from "@/app/assets/images/sidebar_Stores.svg";
 import questionMark from '@/app/assets/images/question_mark.svg'
 
+
 interface DashboardSideBarInterface {
   shopName: string;
   currentPage: string;
   logoUrl: string;
+  domain: string;
 }
 
 const Options: Record<string, { path: string; icon: any }> = {
@@ -37,33 +40,22 @@ const AdvOptions: Record<string, { path: string; icon: any }> = {
   'Multiple Stores ': { path: "org", icon: orgIcon },
 };
 
-const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage, logoUrl }) => {
-  const storeName = shopName.toLowerCase()
-  const logo = logoUrl;
-
-  useEffect(() => {
-    console.log(logo, logoUrl);
-  })
+const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage, logoUrl, domain }) => {
+  const displayName = decodeURIComponent(shopName.substring(0, 14));
+  const storeDomain = domain;
 
   return (
-    <div className="flex flex-col bg-stone-950 h-full pl-5 pr-4 pt-7">
+    <div className="flex flex-col bg-stone-950 w-3/12 h-full pl-5 pr-4 pt-7">
       <div className="flex flex-row w-full items-center mb-4">
-        {logoUrl ? (
-          <Image src={logoUrl} alt="File icon" width={32} height={32} className="w-10 h-10 p-1 rounded-lg"/>
-        ) : (
-          <div className="flex justify-center items-center w-10 h-10 p-1 rounded-full bg-transparent">
-            <Image src={questionMark} alt="File icon" width={32} height={32} className="w-8 h-8 p-1 rounded-lg"/>
-          </div>
-        ) }
-
-        <h1 className="flex text-white uppercase ml-2 w-[190] font-work text-lg font-bold">
-          {shopName.substring(0, 10)}
+        <Image src={logoUrl ? logoUrl : DefaultLogos[Math.floor(Math.random() * DefaultLogos.length)]} alt="File icon" width={32} height={32} className="w-12 h-12 p-1 rounded-lg"/>
+        <h1 className="flex text-white uppercase ml-2 w-[190] font-work text-xl font-bold">
+          {displayName}...
         </h1>
       </div>
-      <span className="font-work uppercase text-xs mb-2">General</span>
+      <span className="font-work uppercase text-md mb-2">General</span>
       <div className="flex flex-col w-full items-start mb-4">
         {Object.entries(Options).map(([label, { path, icon }]) => (
-          <Link href={`/dashboard/${storeName}/${path}`}
+          <Link href={`/dashboard/${storeDomain}/${path}`}
             key={path}
             className={`flex flex-row w-full items-center justify-start pl-3 mb-1 p-2 rounded-xl
             text-white hover:bg-white/5 transition ease-in-out duration-200`}
@@ -77,14 +69,14 @@ const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage
             }
           >
             <Image src={icon} alt={`${label} icon`} width={16} height={16} />
-            <h1 className="flex mt-[0.5] pl-3 py-0 font-work text-sm">{label}</h1>
+            <h1 className="flex mt-[0.5] pl-3 py-0 font-work text-lg">{label}</h1>
           </Link>
         ))}
       </div>
-      <span className="font-work uppercase text-xs mb-2">Advanced</span>
+      <span className="font-work uppercase text-md mb-2">Advanced</span>
       <div className="flex flex-col w-full items-start">
         {Object.entries(AdvOptions).map(([label, { path, icon }]) => (
-          <Link href={`/dashboard/${storeName}/${path}`}
+          <Link href={`/dashboard/${storeDomain}/${path}`}
 
             key={path}
             className={`flex flex-row w-full items-center justify-start pl-3 mb-1 p-2 rounded-xl
@@ -99,7 +91,7 @@ const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage
             }
           >
             <Image src={icon} alt={`${label} icon`} width={16} height={16} />
-            <h1 className="flex mt-[0.5] pl-3 py-0 font-work text-sm">{label}</h1>
+            <h1 className="flex mt-[0.5] pl-3 py-0 font-work text-lg">{label}</h1>
           </Link>
         ))}
       </div>

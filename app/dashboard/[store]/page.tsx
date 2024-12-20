@@ -88,7 +88,6 @@ export default function Dashboard() {
 
   useEffect(() => {
     determineStep();
-    
   })
 
 
@@ -99,12 +98,12 @@ export default function Dashboard() {
         <div className="flex h-screen w-screen justify-start items-center">
           {canContinue ? (
             <>
-            <DashboardSideBar shopName={store.store_name} currentPage="Home" />
+            <DashboardSideBar shopName={store.store_name} currentPage="Home" logoUrl={''} domain={''}/>
             <h1>{store.store_name}</h1>
             </>
           ) : (
             <>
-            <DashboardSideBar shopName={store ? store.store_name : user.id} currentPage="Home" />
+            <DashboardSideBar shopName={store ? store.store_name : user.id} currentPage="Home" logoUrl={store ? store.logo_url : ''} domain={store ? store.subdomain as string : ''}/>
             <div className="flex flex-col w-full h-full justify-center items-center">
               <div className="flex flex-col w-3/5 h-4/6 pl-8 bg-stone-950 rounded-lg">
               <div className="flex flex-row justify-between items-center h-full w-full">
@@ -113,13 +112,13 @@ export default function Dashboard() {
                     {steps.map((description, index) => (
                       <div key={index} className="flex flex-col items-center justify-center m-0 p-o w-full">
                         {index > 0 && (
-                          <div className="flex h-7 w-0.5 bg-[var(--lunting)] m-0 p-0"></div>
+                          <div className="flex h-10 w-0.5 bg-[var(--lunting)] m-0 p-0"></div>
                         )}
 
                         <Image
                           src={(index + 1) < step ? check : (index + 1) == step ? current : not_check}
                           alt="Random icon"
-                          className="w-10 h-5 rounded-full p-0 m-0"
+                          className="w-14 h-7 rounded-full p-0 m-0"
                         />
                       </div>
                     ))}
@@ -128,8 +127,8 @@ export default function Dashboard() {
                   {steps.map((description, index) => (
                     <div key={index}>
                     {index == 0 ? (
-                      <div className="text-[0.7rem] font-work pt-[0.10rem] font-light">{description}</div>
-                    ) : <div className="flex items-end w-full h-12 text-[0.7rem] font-work font-light">{description}</div>}
+                      <div className="text-[0.9rem] font-work pt-[0.2rem] font-light">{description}</div>
+                    ) : <div className="flex items-end w-full h-[4.25rem] text-[0.9rem] font-work font-light">{description}</div>}
                     </div>
                   ))}
                   </div>
