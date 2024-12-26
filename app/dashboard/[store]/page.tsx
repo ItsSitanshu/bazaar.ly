@@ -16,6 +16,8 @@ import StoreForm from '@/app/components/StoreForm';
 const supabase = createClientComponentClient();
 
 
+
+
 export default function Dashboard() {
   const [step, setStep] = useState(0);
   const [canContinue, setCanContinue] = useState<boolean>(false);

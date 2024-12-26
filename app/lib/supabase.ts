@@ -11,7 +11,7 @@ const fetchStores = async (supabase: any, userId: string, setStore: any) => {
   try {
     const { data: stores, error } = await supabase
       .from('store')
-      .select('store_name, store_phone, logo_url, description, subdomain')
+      .select('store_name, store_phone, logo_url, description, subdomain, address')
       .eq('user_id', userId);
 
     if (error) {

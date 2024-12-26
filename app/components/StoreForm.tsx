@@ -15,6 +15,8 @@ interface StoreFormInterface {
 
 const supabase = createClientComponentClient();
 
+import { locationInfo, Province } from "@/app/lib/location";
+
 export const DefaultLogos = [
   'https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/logos/default1.svg',
   'https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/logos/default2.svg',
@@ -40,8 +42,8 @@ const StoreForm: FC<StoreFormInterface> = ({ user, setStore }) => {
   const [description, setDescription] = useState<string>("");
   const [subdomain, setSubDomain] = useState<string>("");
   const [employeeOption, setEmployeeOption] = useState<number>(1);
-  const [address, setAddress] = useState<{province: string; district: string; city: string}>({
-    province: "",
+  const [address, setAddress] = useState<{province: Province; district: string; city: string}>({
+    province: "Bagmati",
     district: "",
     city: ""
   });
@@ -128,31 +130,83 @@ const StoreForm: FC<StoreFormInterface> = ({ user, setStore }) => {
             />
           </div>
           <div className="flex flex-row justify-between items-start w-full mb-2">
-            <span className="font-work font-light text-[0.8rem] w-4/12 p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Business address</span>
+            <span className="font-work font-light text-[0.8rem] w-4/12 p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
+              Business address
+            </span>
             <div className="flex flex-col justify-between h-32 w-8/12">
-              <input
-                type="text"
-                placeholder="Province"
-                className={`h-10 w-full bg-stone-900/30 ${address.province === "" ? 'font-extralight text-[0.75em]' : 'font-normal text-[0.85em]'} font-work rounded-md w-8/12 pl-2 m-0 focus:outline-none`}
+              <select
+                className={`h-10 w-full bg-stone-900/30 font-normal text-[0.85em] font-work rounded-md px-2 m-0 focus:outline-none`}
                 value={address.province}
-                onChange={(e) => setAddress((prev: any) => ({ ...prev,  province: e.target.value, })) }
-              />
-              <input
-                type="text"
-                placeholder="District"
-                className={`h-10 w-full bg-stone-900/30 ${address.district === "" ? 'font-extralight text-[0.75em]' : 'font-normal text-[0.85em]'} font-work  rounded-md w-8/12 pl-2 m-0 focus:outline-none`}
+                onChange={(e) =>
+                  setAddress((prev: any) => ({
+                    ...prev,
+                    province: e.target.value,
+                    district: "",
+                    city: "", 
+                  }))
+                }
+              >
+                <option value="" disabled className="bg-black text-white font-md">
+                  Select Province
+                </option>
+                {Object.keys(locationInfo).map((province) => (
+                  <option key={province} value={province} className="bg-black text-white font-light">
+                    {province}
+                  </option>
+                ))}
+              </select>
+
+              <select
+                className={`h-10 w-full bg-stone-900/30 ${
+                  address.district === "" ? 'font-extralight text-[0.75em]' : 'font-normal text-[0.85em]'
+                } font-work rounded-md pl-2 m-0 focus:outline-none`}
                 value={address.district}
-                onChange={(e) => setAddress((prev: any) => ({ ...prev,  district: e.target.value, })) }
-              />
-              <input
-                type="text"
-                placeholder="City"
-                className={`h-10 w-full bg-stone-900/30 ${address.city === "" ? 'font-extralight text-[0.75em]' : 'font-normal text-[0.85em]'} font-work  rounded-md w-8/12 pl-2 m-0 focus:outline-none`}
+                onChange={(e) =>
+                  setAddress((prev: any) => ({
+                    ...prev,
+                    district: e.target.value,
+                    city: "",
+                  }))
+                }
+                disabled={!address.province}
+              >
+                <option value="" disabled className="bg-black text-white font-md">
+                  {address.province ? "Select District" : "Select Province First"}
+                </option>
+                {address.province &&
+                  Object.keys(locationInfo[address.province]).map((district) => (
+                    <option key={district} value={district} className="bg-black text-white font-light">
+                      {district}
+                    </option>
+                  ))}
+              </select>
+
+              <select
+                className={`h-10 w-full bg-stone-900/30 ${
+                  address.city === "" ? 'font-extralight text-[0.75em]' : 'font-normal text-[0.85em]'
+                } font-work rounded-md pl-2 m-0 focus:outline-none`}
                 value={address.city}
-                onChange={(e) => setAddress((prev: any) => ({ ...prev,  city: e.target.value, })) }
-              />
+                onChange={(e) =>
+                  setAddress((prev: any) => ({
+                    ...prev,
+                    city: e.target.value,
+                  }))
+                }
+                disabled={!address.district}
+              >
+                <option value="" disabled className="bg-black text-white font-md">
+                  {address.district ? "Select City" : "Select District First"}
+                </option>
+                {address.district &&
+                  locationInfo[address.province][address.district]?.map((municipality: any) => (
+                    <option key={municipality} value={municipality} className="bg-black text-white font-light">
+                      {municipality}
+                    </option>
+                  ))}
+              </select>
             </div>
           </div>
+
           <div className="flex flex-row justify-between items-start w-full">
             <span className="font-work font-light text-[0.8rem] w-4/12 p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Number of Employees</span>
             <div className="flex flex-row justify-between h-32 w-8/12 ">
