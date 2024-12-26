@@ -94,6 +94,7 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
 
   useEffect(() => {
     if (_store) {
+      console.log("xyz", _store.store_name == name, _store.store_phone == phone, _store.address == address, _store.logo_url == logo_url);
       if (
         _store.store_name  !== name ||
         _store.store_phone !== phone ||
@@ -133,7 +134,7 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
     try {
       const { data: uploadData, error } = await supabase.storage
         .from('logos')
-        .upload(filePath, selectedFile, { upsert: true });
+        .upload(filePath, selectedFile, { upsert: true});
   
       if (error) {
         throw error;
@@ -144,8 +145,7 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
         .getPublicUrl(filePath);
       
 
-      console.log("upload: ", publicUrlData.publicUrl);
-      setLogoUrl(publicUrlData.publicUrl);
+      return publicUrlData.publicUrl as string;
     } catch (error: any) {
       console.error('Error uploading logo:', error.message);
     }
@@ -166,13 +166,15 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
       alert('Error checking for existing store');
       return;
     }
-  
+    
+    let logoURL: string | undefined = "";
+
     if (data && data.length > 0) {
       console.log('Existing store:', data);
   
       if (selectedFile) {
         try {
-          await uploadLogo();
+          logoURL = await uploadLogo();
         } catch (error) {
           console.error('Error uploading logo:', error);
           alert('There was an issue uploading the logo. Please try again.');
@@ -187,7 +189,7 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
         store_name: name,
         store_phone: phone,
         address: address,
-        logo_url: logo_url,
+        logo_url: logoURL,
       };
   
       try {
@@ -211,7 +213,6 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
   
     } 
   };
-  
   
 
 
@@ -296,8 +297,8 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
               onChange={handleFileChange} 
             />
             <Image src={logo_url || _store.logo_url} 
-              width={32}
-              height={32}
+              width={2000}
+              height={2000}
               alt='?' 
               className='w-auto h-full hover:cursor-pointer rounded-full border border-white' 
               onClick={() => fileInputRef.current?.click()}

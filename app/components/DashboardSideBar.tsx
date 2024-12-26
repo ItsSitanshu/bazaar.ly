@@ -47,7 +47,7 @@ const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage
   return (
     <div className="flex flex-col bg-stone-950 w-3/12 h-full pl-5 pr-4 pt-7">
       <div className="flex flex-row w-full items-center mb-4">
-        <Image src={logoUrl ? logoUrl : DefaultLogos[Math.floor(Math.random() * DefaultLogos.length)]} alt="File icon" width={32} height={32} className="w-12 h-12 p-1 rounded-lg"/>
+        <Image src={logoUrl ? logoUrl : DefaultLogos[Math.floor(Math.random() * DefaultLogos.length)]} alt="File icon" width={2000} height={2000} className="w-12 h-12 p-1 rounded-lg"/>
         <h1 className="flex text-white uppercase ml-2 w-[190] font-work text-xl font-bold">
           {displayName}...
         </h1>
