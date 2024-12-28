@@ -180,6 +180,8 @@ export default function SettingsPage({ params }: { params: Promise<{ store: stri
           alert('There was an issue uploading the logo. Please try again.');
           return; 
         }
+      } else {
+        logoURL = logo_url
       }
   
       const updates = {

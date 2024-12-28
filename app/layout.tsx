@@ -16,7 +16,7 @@ const geistMono = localFont({
 export const metadata: Metadata = {
   title: "Bazaar.ly",
   icons: {
-    icon: "/logo.ico", 
+    icon: "/logo.svg", 
     apple: "/logo.png", 
   }
 };

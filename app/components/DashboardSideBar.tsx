@@ -27,7 +27,7 @@ interface DashboardSideBarInterface {
 
 const Options: Record<string, { path: string; icon: any }> = {
   'Home': { path: "/", icon: homeIcon },
-  'Product': { path: "upload", icon: productIcon },
+  'Product': { path: "products", icon: productIcon },
   'Orders': { path: "orders", icon: ordersIcon },
   'Website': { path: "website", icon: websiteIcon },
   'Inventory': { path: "inventory", icon: inventoryIcon },
@@ -49,7 +49,7 @@ const DashboardSideBar: FC<DashboardSideBarInterface> = ({ shopName, currentPage
       <div className="flex flex-row w-full items-center mb-4">
         <Image src={logoUrl ? logoUrl : DefaultLogos[Math.floor(Math.random() * DefaultLogos.length)]} alt="File icon" width={2000} height={2000} className="w-12 h-12 p-1 rounded-lg"/>
         <h1 className="flex text-white uppercase ml-2 w-[190] font-work text-xl font-bold">
-          {displayName}...
+          {displayName}
         </h1>
       </div>
       <span className="font-work uppercase text-md mb-2">General</span>
