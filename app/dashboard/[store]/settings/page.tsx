@@ -26,6 +26,7 @@ const Options: Record<string, {option: number, icon: any, color: string}> = {
 };
 
 
+
 export default function SettingsPage({ params }: { params: Promise<{ store: string }> }) {
   const param = React.use(params);
   const { store } = param;

@@ -1,11 +1,13 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-
 import DashboardSideBar from "@/app/components/DashboardSideBar";
 import Image from "next/image";
 import { fetchStores } from '@/app/lib/supabase';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import Link from 'next/link';
+import { getMaxProducts, getStringPlan } from '@/app/lib/pricing';
+import TT from '@/app/components/ToolTip';
 
 import uploadIcon from '@/app/assets/images/upload.svg';
 import crossIcon from '@/app/assets/images/cross.svg';
@@ -16,14 +18,15 @@ import plusIcon from '@/app/assets/images/plus.svg';
 import discardIcon from '@/app/assets/images/discard.svg';
 import filterIcon from '@/app/assets/images/filter.svg';
 import categoryIcon from '@/app/assets/images/category.svg';
-
-
-
-
-import Link from 'next/link';
-import { getMaxProducts, getStringPlan } from '@/app/lib/pricing';
+import discard_disIcon from '@/app/assets/images/discard_dis.svg';
+import liveIcon from '@/app/assets/images/live.svg';
+import live_disIcon from '@/app/assets/images/live_dis.svg';
+import createIllustration from '@/app/assets/images/create_illustration.svg';
+import ProductsTable from '@/app/components/ProductsTable';
 
 const supabase = createClientComponentClient();
+
+
 
 export default function ProductsPage({ params }: { params: Promise<{ store: string }> }) {
   const param = React.use(params);
@@ -43,12 +46,22 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
   const [discount, setDiscount] = useState<string>("");
   
   const [isDraggingImage, setDraggingImage] = useState<boolean>(false);
+  const [shakeCreateBTN, setshakeCreateBTN] = useState<boolean>(false);
 
   const [selectedProducts, setSelectedProducts] = useState<any[]>([]);
   const [products, setProducts] = useState<any[]>([]);
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [editProduct, setEditProduct] = useState<any | null>(null);
   const fileInputRef = React.createRef<HTMLInputElement>();
+
+  const [editIsDraggingImage, seteditIsDraggingImage] = useState<boolean>(false);
+  const [editSelectedFiles, setEditSelectedFiles] = useState<File[]>([]);
+  const [editImgUrls, setEditImgUrls] = useState<string[]>([]);
+
+  const editFileInputRef = React.createRef<HTMLInputElement>();
+
+
 
   useEffect(() => {
     const fetchSession = async () => {
@@ -84,9 +97,13 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     if (_store) {
       fetchProducts();
     }
+    setCategories(_store ? _store.prod_det.categories : []);
   }, [_store]);
 
-
+  useEffect(() => {
+    setshakeCreateBTN(products.length == 0);
+    console.log(shakeCreateBTN);
+  }, [products])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]; 
@@ -96,6 +113,37 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       setimgUrls((prev: any) => [...prev, fileUrl]);
       setSelectedFiles((prev: any) => [...prev, file]);
     }
+  };
+
+  const handleEditFileChange  = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]; 
+    if (file) {
+      const fileUrl = URL.createObjectURL(file);
+      
+      setEditImgUrls((prev: any) => [...prev, fileUrl]);
+      setEditSelectedFiles((prev: any) => [...prev, file]);
+    }
+  };
+
+  const editHandleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    seteditIsDraggingImage(true);
+  };
+
+  const editHandleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    e.stopPropagation();
+    const file = e.dataTransfer.files[0]; 
+    if (file) {
+      const fileUrl = URL.createObjectURL(file);
+
+      setEditImgUrls((prev: any) => [...prev, fileUrl]);
+      setEditSelectedFiles((prev: any) => [...prev, file]);
+    }
+
+    seteditIsDraggingImage(false);
   };
   
   const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
@@ -130,14 +178,46 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     setSelectedFiles([]);
   };
 
-  const uploadImages = async (productId: number) => {
-    if (!selectedFiles || selectedFiles.length === 0) return;
+  const uploadImages = async (productId: number, fileArray: File[], isEdit: boolean) => {
+    if (!fileArray || fileArray.length === 0) return;
   
     let count = 0;
     let uploadList: string[] = [];
     const dir = _store.id as string;
   
-    for (const file of selectedFiles) {
+    const existingFileCounts: number[] = [];
+    try {
+      const { data: fileList, error: listError } = await supabase.storage
+        .from('products')
+        .list(`${dir}/${productId}/`, { limit: 10 }); 
+      
+      if (listError) throw listError;
+  
+      existingFileCounts.push(...fileList.map((file: any) => {
+        const match = file.name.match(/(\d+)$/); 
+        return match ? parseInt(match[1]) : -1; 
+      }));
+  
+    } catch (error: any) {
+      console.error('Error fetching existing files:', error.message);
+    }
+  
+    const missingFiles = [];
+    for (let i = 0; i <= Math.max(...existingFileCounts, 0); i++) {
+      if (!existingFileCounts.includes(i)) {
+        missingFiles.push(i);
+      }
+    }
+  
+    count = missingFiles.length > 0 ? missingFiles[0] : Math.max(...existingFileCounts, -1) + 1;
+  
+    console.log('Missing files:', missingFiles);
+  
+    const uniqueFiles = Array.from(
+      new Map(fileArray.map((file) => [file.name, file])).values()
+    ); 
+  
+    for (const file of uniqueFiles) {
       const filePath = `${dir}/${productId}/${count}`;
   
       try {
@@ -152,18 +232,20 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
         const { data: publicUrlData } = await supabase.storage
           .from('products')
           .getPublicUrl(filePath);
-        
-        let url = publicUrlData.publicUrl as string;
-        uploadList.push(url);
-      } catch (error: any) {
-        console.error('Error uploading image:', error.message);
-      }
   
-      count++;
+        const url = publicUrlData.publicUrl as string;
+        uploadList.push(url);
+  
+        count++;
+  
+      } catch (error: any) {
+        console.error(`Error uploading image (${file.name}):`, error.message);
+      }
     }
   
-    return uploadList;
+    return uploadList; 
   };
+  
   
   const createProduct = async (isActive: boolean) => {
     const fetchStore = async () => {
@@ -196,7 +278,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     const store = storeData[0];
   
     if (!store.prod_det) {
-      const updates = { prod_det: { max: getMaxProducts(store.pricing), cur_prod: 0 } };
+      const updates = { prod_det: { ..._store.prod_det, max: getMaxProducts(store.pricing), cur_prod: 0 } };
   
       try {
         const { data, error } = await supabase
@@ -215,7 +297,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     let uploadList: string[] | undefined = [];
     if (selectedFiles) {
       try {
-        uploadList = await uploadImages(store.prod_det.cur_prod);
+        uploadList = await uploadImages(store.prod_det.cur_prod, selectedFiles, false);
       } catch (error) {
         console.error('Error uploading images:', error);
         alert('There was an issue uploading the images. Please try again.');
@@ -223,6 +305,8 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       }
     }
     
+    const categoryIndex = (_store.prod_det.categories).indexOf(category);
+
     try {
       const { data: insertData, error: insertError } = await supabase
         .from('products')
@@ -231,7 +315,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
           store_id: _store.id,
           name: name,
           desc: description,
-          category: 0,
+          category: categoryIndex,
           price: price,
           discdt: { simple: discount },
           imgs: uploadList,
@@ -247,7 +331,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       console.error('Error saving store changes:', error.message);
       alert(`Error saving store changes: ${error.message || 'Unknown error'}`);
     } finally {
-      const updates = { prod_det: { cur_prod: (store.prod_det.cur_prod + 1)} };
+      const updates = { prod_det: { ..._store.prod_det, cur_prod: (store.prod_det.cur_prod + 1)} };
   
       try {
         const { data, error } = await supabase
@@ -264,6 +348,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
 
       fetchStores(supabase, user.id as string, setStore);
       resetCeatePromptFields();
+      setCurTask(0);
       alert('Changes saved successfully');
     }
   };
@@ -272,7 +357,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     try {
       const { data: productData, error } = await supabase
         .from('products')
-        .select('name, price, imgs, category, salesdt, stockdt')
+        .select('id, active, name, price, imgs, category, salesdt, stockdt')
         .eq('store_id', _store.id);
 
       if (error) {
@@ -285,156 +370,298 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       alert('Error fetching prodcuts data. Please try again.');
       return null;
     }
+  };
+
+  const [categories, setCategories] = useState<string[]>(_store ? _store.prod_det.categories : []);
+  const [categoryPopupVisible, setcategoryPopupVisible] = useState(false);
+  const [newCategory, setNewCategory] = useState('');
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+
+    const updatedProdDet = {
+      ..._store.prod_det,
+      categories: [...(_store.prod_det.categories || []), newCategory],
+    };
+
+    const updates = {
+      prod_det: updatedProdDet, 
+    };
+
+    try {
+      const { data: updatedData, error: updateError } = await supabase
+        .from('store')
+        .update(updates)
+        .eq('user_id', user.id);
+
+      if (updateError) {
+        throw updateError;
+      }
+
+      setCategories((prevCategories) => [...(prevCategories || []), newCategory]);
+      setNewCategory('');
+
+      alert('Category added successfully');
+    } catch (error: any) {
+      console.error('Error saving changes:', error);
+      alert(`Error saving category: ${error.message || 'Unknown error'}`);
+    }
+  };
+
+  const liveSelectedProducts = async () => {  
+    try {
+      for (const productId of selectedProducts) {
+        const { data: productData, error: productError } = await supabase
+          .from('products')
+          .select('id, active')
+          .eq('id', productId)
+          .single();
+  
+        if (productError) {
+          throw productError;
+        }
+  
+        if (productData && !productData.active) {
+          const { error: updateError } = await supabase
+            .from('products')
+            .update({ active: true })
+            .eq('id', productId);
+  
+          if (updateError) {
+            throw updateError;
+          }
+        }
+      }
+  
+    } catch (error: any) {
+      console.error('Error saving product details:', error.message);
+    } finally {
+      fetchProducts();
+      setSelectedProducts([]);
+    }
   }
 
+  useEffect (() => {
+    if (editSelectedFiles[0]) {
+      console.log("lamo", editSelectedFiles[0].name);
+    } else {
+      console.log("no edit selected fi")
+    }
+  })
 
+  const [editPopupShown, seteditPopupShown] = useState(false);
+  const [isSelectionEditable, setIsSelectionEditable] = useState(false);
+  
+  const editSelectedProduct = async () => {
+    if (!editProduct || !editImgUrls) return;
+    
+    const storeId = _store.id as string;
+    const productId = editProduct.id as string;
+
+    try {
+      const existingImages = editProduct.imgs || [];
+      const updatedImages = editImgUrls || [];
+  
+      const removedImages = existingImages.filter((img: string) => !updatedImages.includes(img));
+        
+      const existingFileNames = existingImages.map((img: string) => img.split('/').pop());  // Extract just the filenames
+
+      const newFiles = editSelectedFiles.filter((file: File) => {
+        return !existingFileNames.includes(file.name); // Check if the selected file's name doesn't match any existing file
+      });
+
+      console.log("newfiles:", newFiles);
+      console.log("removedimgs:", removedImages);
+
+      if (removedImages && removedImages.length > 0) {
+
+        const { error: deleteError } = await supabase.storage
+        .from('products')
+        .remove(
+          removedImages.map((img: any) => {
+            const fileName = img.replace(
+              `https://blonmglhfntabwhwswez.supabase.co/storage/v1/object/public/products/${storeId}/${productId}/`,
+              ''
+            );
+            return `${storeId}/${productId}/${fileName}`; 
+          })
+        );
+        
+        if (deleteError) {
+          console.error('Error deleting images:', deleteError);
+          throw new Error('Failed to delete removed images. Please try again.');
+        }
+      } 
+  
+      let uploadedImageUrls: string[] = [];
+      if (newFiles && newFiles.length > 0) {
+        try {
+          const result = await uploadImages(editProduct.id, newFiles, true);
+          uploadedImageUrls = result || []; 
+        } catch (uploadError) {
+          console.error('Error uploading images:', uploadError);
+          alert('There was an issue uploading the new images. Please try again.');
+          return;
+        }
+      }
+
+      console.log("urls", uploadedImageUrls);
+      
+  
+      const updatedImageUrls = [
+        ...existingImages.filter((img: any) => !removedImages.includes(img)),
+        ...uploadedImageUrls,
+      ];
+  
+      const { error: updateError } = await supabase
+        .from('products')
+        .update({
+          name: editProduct.name,
+          price: editProduct.price,
+          category: editProduct.category,
+          active: editProduct.active,
+          imgs: updatedImageUrls,
+        })
+        .eq('id', editProduct.id);
+  
+      if (updateError) {
+        console.error('Error updating product:', updateError);
+        throw new Error('Failed to update the product record. Please try again.');
+      }
+  
+      // Step 5: Finalize the process
+      alert('Product updated successfully.');
+      seteditPopupShown(false);
+      setEditProduct(null);
+  
+    } catch (error: any) {
+      console.error('Error while saving the product:', error);
+      alert(`Failed to update the product: ${error.message || 'Unknown error occurred'}`);
+    }
+  };
+  
+  
+  
+  const handleEditClick = () => {
+    if (selectedProducts.length === 1) {
+      const productToEdit = products.find((p) => p.id === selectedProducts[0]);
+      console.log(productToEdit);
+      if (productToEdit) {
+        setEditProduct({ ...productToEdit });
+        setEditImgUrls(productToEdit.imgs);
+        seteditPopupShown(true);
+      }
+    } else {
+      alert("Please select exactly one product to edit.");
+    }
+  };
+
+
+  const deleteSelectedProducts = async () => {
+    try {
+      const { data: deleteData, error: deleteError } = await supabase
+        .from('products')
+        .delete()
+        .in('id', selectedProducts)
+        .eq('store_id', _store.id);
+  
+      if (deleteError) {
+        throw deleteError;
+      }
+  
+      const dir = _store.id as string;
+      for (const productId of selectedProducts) {
+        const folderPath = `${dir}/${productId}/`; 
+        
+        const { data: files, error: listError } = await supabase.storage
+          .from('products')
+          .list(folderPath, { limit: 100 }); 
+        
+        if (listError) {
+          throw listError;
+        }
+        
+        if (files && files.length > 0) {
+          const pathsToDelete = files.map(file => `${folderPath}${file.name}`);
+          
+          const { error: deleteFilesError } = await supabase.storage
+            .from('products')
+            .remove(pathsToDelete);
+
+          if (deleteFilesError) {
+            throw deleteFilesError;
+          }
+        }
+      }
+
+  
+      fetchProducts();
+      alert('Selected products have been deleted successfully.');
+    } catch (error: any) {
+      console.error('Error deleting products:', error.message);
+      alert('Error deleting products. Please try again.');
+    } finally {
+      setSelectedFiles([])
+    }
+  };
+  
 
   return (
     <>
     { _store ? (
     <div className="flex h-screen w-screen justify-start items-center">
       <DashboardSideBar shopName={_store.store_name} currentPage="Product" logoUrl={_store.logo_url} domain={_store.subdomain}/>
-      <div className="flex flex-col w-full h-full pt-10 pl-10 justify-start">
+      <div className="flex flex-col w-full h-full pt-10 pl-10 ">
         <div className="flex flex-row w-full justify-between">
           <h1 className='font-work text-4xl font-semibold text-white'>Manage Products</h1>
         </div>
-        { curTask == 0 &&
-        <div className="flex flex-col w-full h-full">
-          <div className='flex flex-row h-16 w-full'>
-            <div className="flex flex-row w-2/3 h-10 items-center">
-              <input
-                type='text'
-                className='w-full h-full focus:border focus:border-[var(--bunting)] bg-stone-900/30 font-work text-sm rounded-md pl-2 m-0 focus:outline-none'
-                placeholder='Search'
-              />
-              <Image src={searchIcon}
-                width={24}
-                height={24}
-                alt='->'
-                className='relative h-2/3 right-10'  
-              />
-            </div>
-            <div className="flex flex-row">
-              <button 
-                onClick={() => setCurTask(1)} 
-                className='flex flex-row justify-center items-center bg-[var(--bunting)] rounded-xl px-2 h-10 font-work font-medium text-md
-                hover:bg-[var(--dlunting)] transition ease-in-out duration-300 mr-2'
-              >
-                <Image
-                  src={filterIcon}
-                  width={20}
-                  height={20}
-                  alt='/\'
-                  className='w-6 h-6'
-                />
-              </button>
-              <button 
-                onClick={() => setCurTask(1)} 
-                className='flex flex-row justify-center items-center bg-[var(--bunting)] rounded-xl px-2 h-10 font-work font-medium text-md
-                hover:bg-[var(--dlunting)] transition ease-in-out duration-300 mr-2'
-              >
-                <Image
-                  src={plusIcon}
-                  width={20}
-                  height={20}
-                  alt='+'
-                  className='w-6 h-6 mr-1'
-                />
-                <span>Add Product</span>
-              </button>
-              <button 
-                onClick={() => setCurTask(1)} 
-                className='flex flex-row justify-center items-center bg-[var(--bunting)] rounded-xl px-2 h-10 font-work font-medium text-md
-                hover:bg-[var(--dlunting)] transition ease-in-out duration-300'
-              >
-                <Image
-                  src={categoryIcon}
-                  width={20}
-                  height={20}
-                  alt='/\'
-                  className='w-6 h-6 mr-1'
-                />
-                <span>Categories</span>
-              </button>
-            </div>
-          </div>
-          <div className="flex flex-col bg-stone-900/30 w-11/12 h-full rounded-2xl border border-white/10 p-2">
-            <div className="flex flex-row px-2 mt-2">
-              <h1 className='font-work font-medium text-2xl text-white'>{selectedProducts.length != 0 ? `${selectedProducts?.length } selected` : `${products?.length == 0 ? 'No' : products?.length} Items`}</h1>
-            </div>
-            <div className="flex flex-col border border-white/20 h-full rounded-xl">
-              <div className="flex flex-row items-center w-full pl-2 h-10 ">
-                <div className="flex flex-row items-center border-r border-r-white/20 w-6 h-full">
-                  <input
-                    type="checkbox"
-                    id="custom-checkbox"
-                    className="peer hidden"
-                  />
-                  
-                  <label
-                    htmlFor="custom-checkbox"
-                    className="text-[#ffffff00] w-4 h-4 border border-[var(--bunting)] rounded peer-checked:text-white peer-checked:flex items-center justify-center cursor-pointer
-                              peer-checked:bg-[var(--dlunting)]"
-                  >
-                    <span className="font-bold">-</span>
-                  </label>
+        {curTask === 0 && products.length !== 0 ? (
+          <ProductsTable 
+            products={products}
+            selectedProducts={selectedProducts}
+            setSelectedProducts={setSelectedProducts}
+            _store={_store}
+            categories={categories}
+            setshakeCreateBTN={setshakeCreateBTN}
+            shakeCreateBTN={shakeCreateBTN}
+            setCurTask={setCurTask}
+            setNewCategory={setNewCategory}
+            setcategoryPopupVisible={setcategoryPopupVisible}
+            categoryPopupVisible={categoryPopupVisible}
+            newCategory={newCategory}
+            handleAddCategory={handleAddCategory}
+            deleteSelectedProducts={deleteSelectedProducts}
+            liveSelectedProducts={liveSelectedProducts}
+            editPopupShown={editPopupShown}
+            editSelectedProduct={editSelectedProduct}
+            seteditPopupShown={seteditPopupShown}
+            handleEditClick={handleEditClick}
+            editProduct={editProduct}
+            setEditProduct={setEditProduct}
+            editFileInputRef={editFileInputRef}
+            editHandleDragOver={editHandleDragOver}
+            editHandleDrop={editHandleDrop}
+            editIsDraggingImage={editIsDraggingImage}
+            handleEditFileChange={handleEditFileChange}
+            setEditSelectedFiles={setEditSelectedFiles}
+            editImgUrls={editImgUrls}
+            setEditImgUrls={setEditImgUrls}
+          />
 
-                </div>
-                <h1 className='w-3/12 pl-2 font-work font-light text-md'>Product Name</h1>
-                <h1 className='w-1/12 pl-2 font-work font-light text-md'>Price</h1>
-                <h1 className='w-1/12 pl-2 font-work font-light text-md'>Sales</h1>
-                <h1 className='w-2/12 pl-2 font-work font-light text-md'>Sale Volume</h1>
-                <h1 className='w-1/12 pl-2 font-work font-light text-md'>Stock</h1>
-                <h1 className='w-1/12 pl-2 font-work font-light text-md'>Catgeory</h1>
-                <h1 className='w-2/12 pl-2 font-work font-light text-md'>Action</h1>
-              </div>
-              {products?.map((element: any, index: number) => (
-                <div key={index} className={`flex flex-row w-full pl-2 h-13 border-t border-t-white/10 ${index == (products.length - 1) && 'border-b border-b-white/10'}`}>
-                  <div className="flex flex-row items-center border-r border-r-white/20 w-6 h-full">
-                    <input
-                      type="checkbox"
-                      id={`custom-checkbox-${index}`}
-                      className="peer hidden"
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedProducts((prev: any) => [...prev, index]);
-                        } else {
-                          setSelectedProducts((prev: any) => prev.filter((item: any) => item !== index));
-                        }
-                      }}
-                    />
-                    <label
-                      htmlFor={`custom-checkbox-${index}`}
-                      className={`text-[#ffffff00] w-4 h-4 border border-[var(--bunting)] rounded peer-checked:text-white peer-checked:flex items-center justify-center cursor-pointer
-                                peer-checked:bg-[var(--dlunting)]`}
-                    >
-                      <span className="font-bold">-</span>
-                    </label>
-                  </div>
-                  <div className='flex flex-row py-2 w-3/12 pl-2 font-work'>
-                    <Image src={products[index].imgs[0]}
-                      width={2000}
-                      height={2000}
-                      alt={`${products[index].name}`}
-                      className='w-9 h-9 rounded-xl'
-                    />
-                    <div className="flex flex-col pl-2">
-                      <h1 className='font-work text-sm font-medium'>{products[index].name.length > 40 ? products[index].name.substring(0, 32) + '..' : products[index].name}</h1>
-                      <h1 className='font-work text-xs font-light'>{products[index].vardt ? products[index].vardt.n_variations + 'variations' : 'One Variant'}</h1>
-                    </div>
-                  </div>
-                  <h1 className='w-1/12 py-2 pl-2 font-work'>{products[index].price}<span className='font-cutive text-[0.1em] text-white/20'>NPR</span></h1>
-                  <h1 className='w-1/12 py-2 pl-2 font-work'>{products[index].salesdt ? products[index].salesdt.n_sales : 0}</h1>
-                  <h1 className='w-2/12 py-2 pl-2 font-work'>{products[index].price * (products[index].salesdt ? products[index].salesdt.n_sales : 0)}<span className='font-cutive text-[0.1em] text-white/20'>NPR</span></h1>
-                  <h1 className='w-1/12 py-2 pl-2 font-work'>{products[index].stockdt ? products[index].stockdt.cur : 0}</h1>
-                  <h1 className='w-1/12 py-2 pl-2 font-work'>Catgeory</h1>
-                  <h1 className='w-2/12 py-2 pl-2 font-work'>Action</h1>
-                </div>
-              ))}
-            </div>
-          </div>
-
-        </div>
+        ) : ( products.length === 0 && (
+            <div className='flex w-full h-full flex-col items-center justify-center'>             
+                <Image
+                  src={createIllustration}
+                  width={2000}
+                  height={2000}
+                  alt="?"
+                  className='w-1/3'
+                />
+                <h1 className='font-work font-bold text-2xl mt-4'>
+                  No products yet? <span className='text-[var(--dlunting)]'>Create some!</span>
+                </h1>
+            </div> )
+          )
         }
         { curTask == 1 ? (
         <div className="flex flex-col p-5 ml-10 mt-5 w-11/12 h-4/6  border border-white/5 rounded-xl shadow-white/10 shadow-sm "> 
@@ -447,7 +674,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
           </div>
             <div className="flex flex-row">
               <button 
-                onClick={() => setCurTask(0)} 
+                onClick={() => {setCurTask(0); fetchProducts()}} 
                 className='flex flex-row justify-center items-center bg-transparent rounded-xl px-2 h-10 font-work font-medium text-md
                 hover:bg-red-500/20 transition ease-in-out duration-300 mr-3'
               > 
@@ -460,7 +687,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
                 />
               </button>
               <button 
-                onClick={() => createProduct(true)} 
+                onClick={() => createProduct(false)} 
                 className='flex flex-row justify-center items-center bg-[var(--bunting)] rounded-xl px-2 h-10 font-work font-medium text-md
                 hover:bg-[var(--dlunting)] transition ease-in-out duration-300 mr-3'
               > 
@@ -521,12 +748,15 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
                   <option value="" disabled className="bg-black text-white font-md">
                     Select a category
                   </option>
-                  {Object.keys(_store.categories || []).map((province) => (
-                    <option key={province} value={province} className="bg-black text-white font-light">
-                      {province}
+                  {_store.prod_det.categories.map((category: any, idx: any) => (
+                    <option key={idx} value={category} className="bg-black text-white font-light">
+                      {category}
                     </option>
                   ))}
+
                 </select>
+
+
               </div>
               <div className="flex flex-row justify-between">
                 <div className="w-8/12 mt-3 flex flex-col justify-between items-start mb-2">

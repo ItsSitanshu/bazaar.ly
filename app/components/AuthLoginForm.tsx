@@ -39,7 +39,7 @@ const AuthLoginForm: FC = () => {
 
   return (
     <div className="flex flex-col w-10/12 h-full items-center">
-      <form onSubmit={handleSubmit} className="w-full">
+      <form onSubmit={handleSubmit} className="w-full flex flex-col">
         <div className="flex flex-col items-center w-full h-20">
           <div className="flex flex-col h-full w-full">
             <span className="font-cutive text-[0.7rem] ml-1">Email</span>

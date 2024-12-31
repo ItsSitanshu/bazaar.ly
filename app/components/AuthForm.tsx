@@ -43,7 +43,7 @@ const AuthForm: FC = () => {
 
   return (
     <div className="flex flex-col w-10/12 h-full items-center">
-      <form onSubmit={handleSubmit} className="w-full">
+      <form onSubmit={handleSubmit} className="w-full flex flex-col">
         <div className="flex flex-row justify-between w-full h-16">
           <div className="flex flex-col w-5/12 h-full">
             <span className="font-cutive text-[0.7rem] ml-1">First Name</span>
