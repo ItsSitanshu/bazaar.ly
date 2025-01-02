@@ -6,15 +6,15 @@ import Link from "next/link";
 import { DefaultLogos } from "@/app/components/StoreForm";
 
 
-import homeIcon from "@/app/assets/images/sidebar_Home.svg";
-import productIcon from "@/app/assets/images/sidebar_Product.svg";
-import ordersIcon from "@/app/assets/images/sidebar_Orders.svg";
-import messagingIcon from "@/app/assets/images/sidebar_Messaging.svg";
-import websiteIcon from "@/app/assets/images/sidebar_Website.svg";
-import settingIcon from "@/app/assets/images/sidebar_Setting.svg";
-import employeeIcon from "@/app/assets/images/sidebar_Employee.svg";
-import inventoryIcon from "@/app/assets/images/sidebar_Inventory.svg";
-import orgIcon from "@/app/assets/images/sidebar_Stores.svg";
+import homeIcon from "@/app/assets/images/sidebar/Home.svg";
+import productIcon from "@/app/assets/images/sidebar/Product.svg";
+import ordersIcon from "@/app/assets/images/sidebar/Orders.svg";
+import messagingIcon from "@/app/assets/images/sidebar/Messaging.svg";
+import websiteIcon from "@/app/assets/images/sidebar/Website.svg";
+import settingIcon from "@/app/assets/images/sidebar/Setting.svg";
+import employeeIcon from "@/app/assets/images/sidebar/Employee.svg";
+import inventoryIcon from "@/app/assets/images/sidebar/Inventory.svg";
+import orgIcon from "@/app/assets/images/sidebar/Stores.svg";
 import questionMark from '@/app/assets/images/question_mark.svg'
 
 

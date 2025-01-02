@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import DashboardSideBar from './components/DashboardSideBar';
 
-const supabaseAuth = createClientComponentClient();
+const supabase = createClientComponentClient();
 
 export default function Home() {
   const router = useRouter();
@@ -13,21 +13,23 @@ export default function Home() {
   
   useEffect(() => {
     const fetchSession = async () => {
-      const { data: { session } } = await supabaseAuth.auth.getSession();
-      setUser(session?.user ?? null);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        setUser(session?.user ?? null);
+      } catch (error: any) {
+        console.error('Error fetching session:', error.message);
+      }
     };
 
     fetchSession();
-
-    const { data: authListener } = supabaseAuth.auth.onAuthStateChange(
-      (event: any, session: any) => {
-        setUser(session?.user ?? null);
-      }
-    );
-
+    
+    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+    
     return () => {
       authListener.subscription.unsubscribe();
-    };
+    };    
   }, []);
 
 
@@ -37,7 +39,6 @@ export default function Home() {
         <p>Welcome {user.email}</p>
       ) : (
         <div className='flex w-screen h-screen'>
-        <DashboardSideBar name={user.id}/>
         </div>
       )}
     </div>
