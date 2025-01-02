@@ -2,27 +2,24 @@
 
 import React, { useEffect, useState } from 'react';
 import DashboardSideBar from "@/app/components/DashboardSideBar";
+import ProductVariations, { VariationBase } from '@/app/components/ProductVariations';
 import Image from "next/image";
 import { fetchStores } from '@/app/lib/supabase';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import Link from 'next/link';
 import { getMaxProducts, getStringPlan } from '@/app/lib/pricing';
+import ProductsTable from '@/app/components/ProductsTable';
 import TT from '@/app/components/ToolTip';
 
 import uploadIcon from '@/app/assets/images/upload.svg';
 import crossIcon from '@/app/assets/images/cross.svg';
 import createIcon from '@/app/assets/images/create.svg';
 import archiveIcon from '@/app/assets/images/archive.svg';
-import searchIcon from '@/app/assets/images/search.svg';
-import plusIcon from '@/app/assets/images/plus.svg';
 import discardIcon from '@/app/assets/images/discard.svg';
-import filterIcon from '@/app/assets/images/filter.svg';
-import categoryIcon from '@/app/assets/images/category.svg';
-import discard_disIcon from '@/app/assets/images/discard_dis.svg';
-import liveIcon from '@/app/assets/images/live.svg';
-import live_disIcon from '@/app/assets/images/live_dis.svg';
-import createIllustration from '@/app/assets/images/create_illustration.svg';
-import ProductsTable from '@/app/components/ProductsTable';
+import clothesIcon from '@/app/assets/images/clothes.svg';
+import foodIcon from '@/app/assets/images/food.svg';
+
+import{ validateNumber, validatePercentage, validateText, validateTextPara } from '@/app/lib/products';
 
 const supabase = createClientComponentClient();
 
@@ -40,10 +37,12 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
 
   const [category, setCategory] = useState<string>("");
   const [description, setDescription] = useState<string>("");
-  const [price, setPrice] = useState<string>("");
+  const [price, setPrice] = useState<number>(0);
   const [imgUrls, setimgUrls] = useState<string[]>([]);
   const [sizes, setSizes] = useState<string[]>([]);
-  const [discount, setDiscount] = useState<string>("");
+  const [discount, setDiscount] = useState<number>(0);
+  const [variation, setVariations] = useState<VariationBase[]>();
+  const [addProductError, setaddProductError] = useState<string>("");
   
   const [isDraggingImage, setDraggingImage] = useState<boolean>(false);
   const [shakeCreateBTN, setshakeCreateBTN] = useState<boolean>(false);
@@ -61,8 +60,6 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
 
   const editFileInputRef = React.createRef<HTMLInputElement>();
 
-
-
   useEffect(() => {
     const fetchSession = async () => {
       try {
@@ -79,6 +76,8 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
     });
+    
+    handleCategorySelection('clothing_shoes');
 
     return () => {
       authListener.subscription.unsubscribe();
@@ -112,6 +111,54 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       
       setimgUrls((prev: any) => [...prev, fileUrl]);
       setSelectedFiles((prev: any) => [...prev, file]);
+    }
+  };
+
+  const [selectedCategory, setSelectedCategory] = useState<string>('clothing_shoes');
+
+  const predefinedCategories = {
+    food_beverage: [
+      { id: 1, name: 'Small' },
+      { id: 2, name: 'Medium' },
+      { id: 3, name: 'Large' },
+    ],
+    sizes: [
+      { id: 1, name: 'XS' },
+      { id: 2, name: 'S' },
+      { id: 3, name: 'M' },
+      { id: 4, name: 'L' },
+      { id: 5, name: 'XL' },
+    ],
+    colorways: [
+      { id: 1, name: 'Green' },
+      { id: 2, name: 'White' },
+      { id: 3, name: 'Blue' },
+    ]
+  };
+
+  const handleCategorySelection = (category: string) => {
+    setSelectedCategory(category);
+    if (category === 'food_beverage') {
+      setVariations([
+        {
+          id: 1,
+          name: 'FLAVOR',
+          variations: predefinedCategories.food_beverage,
+        },
+      ]);
+    } else if (category === 'clothing_shoes') {
+      setVariations([
+        {
+          id: 1,
+          name: 'Sizes',
+          variations: predefinedCategories.sizes,
+        },
+        {
+          id: 2,
+          name: 'Colorways',
+          variations: predefinedCategories.colorways,
+        },
+      ]);
     }
   };
 
@@ -170,10 +217,10 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     setName("");
     setDescription("");
     setCategory("");
-    setPrice("");
+    setPrice(0);
     setimgUrls([]);
     setSizes([]);
-    setDiscount("");
+    setDiscount(0);
     setimgUrls([]);
     setSelectedFiles([]);
   };
@@ -311,7 +358,6 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       const { data: insertData, error: insertError } = await supabase
         .from('products')
         .insert([{
-          id: store.prod_det.cur_prod,
           store_id: _store.id,
           name: name,
           desc: description,
@@ -319,7 +365,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
           price: price,
           discdt: { simple: discount },
           imgs: uploadList,
-          vardt: null,
+          vardt: variation,
           active: isActive
       }])
   
@@ -357,7 +403,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     try {
       const { data: productData, error } = await supabase
         .from('products')
-        .select('id, active, name, price, imgs, category, salesdt, stockdt')
+        .select('id, active, name, price, imgs, category, salesdt, stockdt, desc')
         .eq('store_id', _store.id);
 
       if (error) {
@@ -371,6 +417,19 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       return null;
     }
   };
+
+  useEffect(() => {
+    const error = validateText(name, 'Name', 3, 80)
+      || validateTextPara(description, 'Description', 10, 50)
+      || validateText(description, 'Description', 10, 310)
+      || (category === '' && 'Please select a category')
+      || validateNumber(price, 'Price')
+      || validatePercentage(discount, 'Discount')
+      || (selectedFiles.length === 0 && 'Your product must have at least one image')
+      || ''
+    
+    setaddProductError(error);
+  }, [name, description, price, category, selectedFiles]);
 
   const [categories, setCategories] = useState<string[]>(_store ? _store.prod_det.categories : []);
   const [categoryPopupVisible, setcategoryPopupVisible] = useState(false);
@@ -440,14 +499,6 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
       setSelectedProducts([]);
     }
   }
-
-  useEffect (() => {
-    if (editSelectedFiles[0]) {
-      console.log("lamo", editSelectedFiles[0].name);
-    } else {
-      console.log("no edit selected fi")
-    }
-  })
 
   const [editPopupShown, seteditPopupShown] = useState(false);
   const [isSelectionEditable, setIsSelectionEditable] = useState(false);
@@ -521,6 +572,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
           category: editProduct.category,
           active: editProduct.active,
           imgs: updatedImageUrls,
+          desc: editProduct.desc
         })
         .eq('id', editProduct.id);
   
@@ -529,7 +581,6 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
         throw new Error('Failed to update the product record. Please try again.');
       }
   
-      // Step 5: Finalize the process
       alert('Product updated successfully.');
       seteditPopupShown(false);
       setEditProduct(null);
@@ -537,6 +588,8 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
     } catch (error: any) {
       console.error('Error while saving the product:', error);
       alert(`Failed to update the product: ${error.message || 'Unknown error occurred'}`);
+    } finally {
+      setSelectedProducts([]);
     }
   };
   
@@ -615,7 +668,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
         <div className="flex flex-row w-full justify-between">
           <h1 className='font-work text-4xl font-semibold text-white'>Manage Products</h1>
         </div>
-        {curTask === 0 && products.length !== 0 ? (
+        {curTask === 0 && (
           <ProductsTable 
             products={products}
             selectedProducts={selectedProducts}
@@ -648,20 +701,7 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
             setEditImgUrls={setEditImgUrls}
           />
 
-        ) : ( products.length === 0 && (
-            <div className='flex w-full h-full flex-col items-center justify-center'>             
-                <Image
-                  src={createIllustration}
-                  width={2000}
-                  height={2000}
-                  alt="?"
-                  className='w-1/3'
-                />
-                <h1 className='font-work font-bold text-2xl mt-4'>
-                  No products yet? <span className='text-[var(--dlunting)]'>Create some!</span>
-                </h1>
-            </div> )
-          )
+        )
         }
         { curTask == 1 ? (
         <div className="flex flex-col p-5 ml-10 mt-5 w-11/12 h-4/6  border border-white/5 rounded-xl shadow-white/10 shadow-sm "> 
@@ -719,8 +759,9 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
           </div>
           <div className="flex flex-row h-full">
             <div className="flex flex-col w-1/2 h-full mr-6 rounded-xl border  border-white/15 p-4">
+              {addProductError && <h1 className="font-work font-bold text-xs text-red-500">Error: {addProductError}</h1> }              
               <div className="flex flex-col justify-between items-start w-full mb-2">
-                <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Name Product</span>
+                <span className="font-work text-[0.9rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Name Product</span>
                 <input
                   type="text"
                   placeholder="Super Cool Hoodie"
@@ -730,16 +771,16 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
                 />
               </div>
               <div className="flex flex-col justify-between items-start w-full mb-2">
-                <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Description of your product</span>
+                <span className="font-work text-[0.9rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Description of your product</span>
                 <textarea
                   placeholder={`Describe ${name != "" ? name : 'your product'}`}
-                  className={`mt-2 h-20 bg-stone-900/30 text-sm text-white font-work rounded-md w-full pl-2 pt-1 m-0 focus:outline-none`}
+                  className={`mt-2 h-28 bg-stone-900/30 text-sm text-white font-work rounded-md w-full pl-2 pt-1 m-0 focus:outline-none`}
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
               </div>
               <div className="flex flex-col justify-between w-full">
-                <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Category</span>
+                <span className="font-work text-[0.9rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Category</span>
                 <select
                   className={`mt-2 h-10 w-full bg-stone-900/30 font-normal text-[0.85em] font-work rounded-md px-2 m-0 focus:outline-none`}
                   value={category}
@@ -755,19 +796,17 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
                   ))}
 
                 </select>
-
-
               </div>
               <div className="flex flex-row justify-between">
                 <div className="w-8/12 mt-3 flex flex-col justify-between items-start mb-2">
-                  <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Pricing</span>
+                  <span className="font-work text-[0.9rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Pricing</span>
                   <div className="mt-1 flex flex-row items-center w-full">
                     <input
-                      type="text"
+                      type="number"
                       placeholder="xx xx xx"
                       className={`h-10 w-3/4 focus:border focus:border-[var(--bunting)] bg-stone-900/30 font-work rounded-l-md pl-2 m-0 focus:outline-none`}
                       value={price}
-                      onChange={(e) => setPrice(e.target.value)}
+                      onChange={(e) => setPrice(parseInt(e.target.value))}
                     />
                     <div className="bg-stone-900/70  border-white/60 rounded-r-md h-10 w-1/4">
                       <h1 className={`flex flex-row justify-center items-center h-full w-full font-work font-bold text-md`}>NPR</h1>
@@ -775,24 +814,49 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
                   </div>
                 </div>
                 <div className="w-3/12 mt-3 flex flex-col justify-between items-start mb-2">
-                  <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Discount</span>
+                  <span className="font-work text-[0.9rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Discount</span>
                   <div className="mt-1 flex flex-row items-center w-full">
                     <input
-                      type="text"
+                      type="number"
                       placeholder="xx"
                       className={`h-10 w-3/4 focus:border focus:border-[var(--bunting)] bg-stone-900/30 font-work rounded-l-md pl-2 m-0 focus:outline-none`}
                       value={discount}
-                      onChange={(e) => setDiscount(e.target.value)}
+                      onChange={(e) => setDiscount(parseInt(e.target.value))}
                     />
                     <div className="bg-stone-900/70 border-white/60 rounded-r-md h-10 w-1/4">
                       <h1 className={`flex flex-row justify-center items-center h-full w-full font-work font-bold text-md`}>%</h1>
                     </div>
                   </div>
                 </div>
-              </div>
-              <div className="mt-3 flex flex-col justify-between items-start mb-2">
-                <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Advanced Options</span>
-                <h1 className='font-work w-full'>TODO: IMPLEMENT COLOR WAYS</h1>
+            </div>
+            <div className="flex flex-col justify-center w-full">
+              <span className="font-work text-[0.9rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Type of product</span>
+              <div className="flex flex-row justify-start items-center  mt-2 w-full"><div className="flex flex-row w-9/12 gap-3">
+                <TT text='Clothing and Shoes' position='bottom' wParam='w-5/12'><button
+                  onClick={() => handleCategorySelection('clothing_shoes')}
+                  className={`flex items-center justify-center w-full px-4 py-2 rounded ${selectedCategory === 'clothing_shoes' ? 'bg-white/20' : 'border border-white/50'} text-white`}
+                >
+                  <Image
+                    src={clothesIcon}
+                    width={20}
+                    height={20}
+                    alt="food"
+                    className="w-6 h-6"
+                  />
+                </button></TT>
+                 <TT text='Clothing and Shoes' position='bottom' wParam='w-5/12'><button
+                  onClick={() => handleCategorySelection('food_beverage')}
+                  className={`flex items-center justify-center w-full px-4 py-2 rounded ${selectedCategory === 'food_beverage' ? 'bg-white/20' : 'border border-white/50'} text-white`}
+                >
+                  <Image
+                    src={foodIcon}
+                    width={20}
+                    height={20}
+                    alt="food"
+                    className="w-6 h-6"
+                  />
+                </button></TT>
+              </div></div>
               </div>
             </div>
             <div className="flex flex-col w-1/2 h-full border rounded-xl border-white/15 p-3">
@@ -847,6 +911,10 @@ export default function ProductsPage({ params }: { params: Promise<{ store: stri
                   />
                 </div>
               ))}
+              </div>
+              <div className="mt-3 flex flex-col justify-between items-start mb-2">
+                <span className="font-work text-[0.9rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Variations</span>
+                <ProductVariations selectedCategory={selectedCategory} variations={variation} setVariations={setVariations}/>
               </div>
             </div>
           </div>

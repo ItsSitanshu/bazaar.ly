@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import TT from "@/app/components/ToolTip";
 
@@ -7,13 +7,15 @@ import plusIcon from '@/app/assets/images/plus.svg';
 import discardIcon from '@/app/assets/images/discard.svg';
 import filterIcon from '@/app/assets/images/filter.svg';
 import categoryIcon from '@/app/assets/images/category.svg';
-import discard_disIcon from '@/app/assets/images/discard_dis.svg';
+import trashIcon from '@/app/assets/images/trash.svg';
 import liveIcon from '@/app/assets/images/live.svg';
-import live_disIcon from '@/app/assets/images/live_dis.svg';
 import editIcon from '@/app/assets/images/edit.svg';
-import edit_disIcon from '@/app/assets/images/edit_dis.svg';
+import createIllustration from '@/app/assets/images/create_illustration.svg';
+
 import uploadIcon from '@/app/assets/images/upload.svg';
 import crossIcon from '@/app/assets/images/cross.svg';
+
+import{ validateNumber, validatePercentage, validateText, validateTextPara } from '@/app/lib/products';
 
 type Product = {
   id: string;
@@ -96,7 +98,20 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
   setEditImgUrls,
   _store,
 }) => {
+  const [editProductError, seteditProductError] = useState<string | null>('');
 
+  useEffect(() => {
+    if (editProduct == null) return;
+    const error = validateText(editProduct.name, 'Name', 3, 80)
+      || validateTextPara(editProduct.desc, 'Description', 10, 50)
+      || validateText(editProduct.desc, 'Description', 10, 310)
+      || (editProduct.category === undefined && 'Please select a category')
+      || validateNumber(editProduct.price, 'Price')
+      || ''
+
+    seteditProductError(error);
+  }, [editProduct]);
+  
   return (
     <div className="flex flex-col w-full h-full">
       <div className='flex flex-row h-16 w-full'>
@@ -260,11 +275,11 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     onClick={handleEditClick}
                     className={`flex flex-row justify-center items-center bg-transparent rounded-xl px-2 h-10 font-work font-medium text-md
                     transition ease-in-out duration-300 mr-3 border
-                    ${selectedProducts.length != 1 ? 'border-white' : 'border-red-500/20 hover:bg-red-500/20'}`}
+                    ${selectedProducts.length != 1 ? 'border-white' : 'border-[var(--dlunting)] hover:bg-[var(--lunting)]'}`}
                     aria-label="Make selected products go live"
                   >
                     <Image
-                      src={selectedProducts.length != 1 ? edit_disIcon : editIcon}
+                      src={editIcon}
                       width={20}
                       height={20}
                       alt='Edit'
@@ -272,17 +287,17 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     />
                   </button>
                 </TT>
-                <TT text={`Delete Selected items ${selectedProducts.length === 0 && '(disabled)'}`} position='top'>
+                <TT text={`Delete Selected items ${selectedProducts.length === 0 ? '(disabled)' : ''}`} position='top'>
                   <button
                     disabled={selectedProducts.length === 0}
                     onClick={deleteSelectedProducts}
                     className={`flex flex-row justify-center items-center bg-transparent rounded-xl px-2 h-10 font-work font-medium text-md
                     transition ease-in-out duration-300 mr-3 border
-                    ${selectedProducts.length === 0 ? 'border-white' : 'border-red-500/20 hover:bg-red-500/20'}`}
+                    ${selectedProducts.length === 0 ? 'border-white' : 'border-[var(--dlunting)] hover:bg-[var(--lunting)]'}`}
                     aria-label="Delete selected items"
                   >
                     <Image
-                      src={selectedProducts.length === 0 ? discard_disIcon : discardIcon}
+                      src={trashIcon}
                       width={20}
                       height={20}
                       alt='Delete'
@@ -310,17 +325,12 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                         selectedProducts.length === 0 ||
                         !selectedProducts.every(id => products.find(p => p.id === id && !p.active))
                           ? 'border-white'
-                          : 'border-red-500/20 hover:bg-red-500/20'
+                          : 'border-[var(--dlunting)] hover:bg-[var(--lunting)]'
                       }`}
                     aria-label="Make selected products go live"
                   >
                     <Image
-                      src={
-                        selectedProducts.length === 0 ||
-                        !selectedProducts.every(id => products.find(p => p.id === id && !p.active))
-                          ? live_disIcon
-                          : liveIcon
-                      }
+                      src={liveIcon}
                       width={20}
                       height={20}
                       alt="Live"
@@ -398,7 +408,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     />
                     <div className="flex flex-col pl-2">
                       <h1 className='font-work text-sm font-medium'>
-                        {element.name.length > 35 ? element.name.substring(0, 33) + '..' : element.name}
+                        {element.name.length > 35 ? element.name.substring(0, 32) + '..' : element.name}
                       </h1>
                       <h1 className='font-work text-xs font-light'>
                         {element.vardt ? element.vardt.n_variations + ' variations' : 'One Variant'}
@@ -417,14 +427,15 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
             </div>
             {editPopupShown && editProduct && (
             <div className="fixed inset-0 flex items-center justify-center bg-black/90 z-50">
-              <div className="w-8/12 p-6 bg-black border border-white/5 rounded-xl shadow-white/10 shadow-sm">
+              <div className="w-8/12 h-3/5 p-6 bg-black border border-white/5 rounded-xl shadow-white/10 shadow-sm">
                 <h2 className="font-work text-2xl font-semibold mb-4">
                   Editing <span className="underline decoration-[var(--lunting)]">"{editProduct.name}"</span>
                 </h2>
-                <div className="flex flex-row">
-                <div className="flex flex-col w-6/12 p-6 border border-white/20 rounded-xl">
+                <div className="flex flex-row h-11/12">
+                <div className="flex flex-col w-6/12  p-6 border border-white/20 rounded-xl h-full">
+                  {editProductError && <h1 className="font-work font-bold text-xs text-red-500">Error: {editProductError}</h1>}                
                   <label className="flex flex-col">
-                    <span className="font-work font-light text-lg w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
+                    <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
                       Product Name
                     </span>
                     <input
@@ -434,8 +445,17 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       className="mt-2 h-10 w-full focus:border focus:border-[var(--bunting)] bg-stone-900/30 font-work text-md rounded-md pl-2 m-0 focus:outline-none"
                     />
                   </label>
+                  <div className="flex flex-col justify-between items-start w-full mb-2">
+                    <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">Description of your product</span>
+                    <textarea
+                      placeholder={`Describe ${editProduct.name != "" ? editProduct.name : 'your product'}`}
+                      className={`mt-2 h-28 bg-stone-900/30 text-sm text-white font-work rounded-md w-full pl-2 pt-1 m-0 focus:outline-none`}
+                      value={editProduct.desc}
+                      onChange={(e) => setEditProduct({ ...editProduct, desc: e.target.value })}
+                    />
+                  </div>
                   <label className="flex flex-col">
-                    <span className="font-work font-light text-lg w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
+                    <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
                       Price
                     </span>
                     <input
@@ -446,7 +466,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     />
                   </label>
                   <label className="flex flex-col">
-                    <span className="font-work font-light text-lg w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
+                    <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
                       Category
                     </span>
                     <select
@@ -465,7 +485,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     </select>
                   </label>
                   <label className="flex flex-col">
-                    <span className="font-work font-light text-lg w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
+                    <span className="font-work font-light text-[0.8rem] w-full p-0 m-0 underline decoration-[0.15em] underline-offset-0 decoration-[var(--lunting)]">
                       Live
                     </span>
                     <select
@@ -478,7 +498,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     </select>
                   </label>
                 </div>
-                <div className="flex flex-col ml-5 w-6/12 h-full border rounded-xl border-white/15 p-3">
+                <div className="flex flex-col ml-5 w-6/12 border rounded-xl border-white/15 p-3">
                   <div
                     className={`flex flex-col justify-center items-center h-3/6 w-12/12 border border-dashed border-white/30 rounded-3xl p-20
                     hover:border-[var(--dlunting)] ${editIsDraggingImage   ? 'hover:cursor-move' : 'hover:cursor-pointer'} transition ease-in-out duration-200`}
@@ -531,10 +551,21 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                       </div>
                     ))}
                   </div>
-                  <div className="flex w-full justify-end mt-6">
+                  <div className="flex flex-row items-center w-full justify-end mt-6">
+                    <div className="flex flex-row w-1/3">
+                    <TT wParam='w-8/12' text={`Save your changes ${editProductError !== '' ? '(disabled)' : ''}`} position='top'>
+                    <button
+                      disabled={editProductError !== ''}
+                      onClick={editSelectedProduct}
+                      className="flex flex-row justify-center items-center bg-[var(--bunting)] w-full rounded-xl px-2 h-10 font-work font-medium text-md
+                      hover:bg-[var(--dlunting)] transition ease-in-out duration-300 mr-2"
+                    >
+                      Save
+                    </button></TT>
+                    <TT text={`Go back. Discard this menu`} position='bottom'>
                     <button
                       onClick={() => { seteditPopupShown(false); setEditProduct(null); }}
-                      className='flex flex-row justify-center items-center bg-transparent rounded-xl  px-2 h-10 font-work font-medium text-md
+                      className='flex flex-row justify-center items-center bg-transparent rounded-xl px-2 h-10 font-work font-medium text-md
                       hover:bg-red-500/20 transition ease-in-out duration-300 mr-3'
                       aria-label="Cancel"
                     >
@@ -546,23 +577,28 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                         className='w-6 h-6'
                       />
                     </button>
-                    <button
-                      onClick={editSelectedProduct}
-                      className="flex flex-row justify-center items-center bg-[var(--bunting)] w-3/12 rounded-xl px-2 h-10 font-work font-medium text-md
-                      hover:bg-[var(--dlunting)] transition ease-in-out duration-300 mr-2"
-                    >
-                      Save
-                    </button>
+                    </TT>
+                    </div>
                   </div>
                 </div>
               </div>
               </div>
             </div>
           )}
-
           </>
         ) : (
-          <p className="text-white">No products available</p>
+          <div className='flex w-full h-full flex-col items-center justify-center'>             
+              <Image
+                src={createIllustration}
+                width={2000}
+                height={2000}
+                alt="?"
+                className='w-1/3'
+              />
+              <h1 className='font-work font-bold text-2xl mt-4'>
+                No products yet? <span className='text-[var(--dlunting)]'>Create some!</span>
+              </h1>
+          </div> 
         )}
       </div>
     </div>

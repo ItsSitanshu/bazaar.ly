@@ -4,9 +4,10 @@ interface TooltipInterface {
   text: string;
   position?: 'top' | 'bottom' | 'left' | 'right';
   children: ReactNode;
+  wParam?: string;
 }
 
-const TT: React.FC<TooltipInterface> = ({ children, text, position = 'top' }) => {
+const TT: React.FC<TooltipInterface> = ({ children, wParam, text, position = 'top' }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [rect, setRect] = useState<any>();
   const [tooltipStyle, setTooltipStyle] = useState({});
@@ -59,7 +60,7 @@ const TT: React.FC<TooltipInterface> = ({ children, text, position = 'top' }) =>
   return (
     <div
       ref={wrapperRef}
-      className="inline-flex"
+      className={`inline-flex ${wParam || ''}`}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
