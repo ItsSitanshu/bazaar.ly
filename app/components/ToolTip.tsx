@@ -2,18 +2,20 @@ import React, { useState, useRef, useEffect, ReactNode } from 'react';
 
 interface TooltipInterface {
   text: string;
-  position?: 'top' | 'bottom' | 'left' | 'right';
   children: ReactNode;
+  position?: 'top' | 'bottom' | 'left' | 'right';
   wParam?: string;
+  bgColor?: string;
 }
 
-const TT: React.FC<TooltipInterface> = ({ children, wParam, text, position = 'top' }) => {
+const TT: React.FC<TooltipInterface> = ({ children, wParam, text, position = 'top', bgColor = 'stone-950' }) => {
   const [isHovered, setIsHovered] = useState(false);
   const [rect, setRect] = useState<any>();
   const [tooltipStyle, setTooltipStyle] = useState({});
   const wrapperRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const color = bgColor as string;
 
   useEffect(() => {
     if (isHovered && wrapperRef.current && tooltipRef.current) {
@@ -36,7 +38,7 @@ const TT: React.FC<TooltipInterface> = ({ children, wParam, text, position = 'to
             ? rect.left - tooltipWidth - 10
             : position === 'right'
             ? rect.right + 10
-            : rect.left + (rect.width / 2) - 5,
+            : rect.left + rect.width / 2,
         transform: position === 'top' || position === 'bottom' ? 'translateX(-50%)' : 'translateY(-50%)',
       };
 
@@ -68,19 +70,19 @@ const TT: React.FC<TooltipInterface> = ({ children, wParam, text, position = 'to
       {isHovered && (
         <div
           ref={tooltipRef}
-          className="fixed px-2 py-2 text-center text-xs font-semibold text-white bg-stone-950 rounded-xl shadow-lg z-50 font-work"
+          className={`fixed px-2 py-2 text-center text-xs font-semibold text-white bg-${color} rounded-xl shadow-lg z-50 font-work`}
           style={tooltipStyle}
         >
           {text}
           <div
             className={`absolute w-0 h-0 border-transparent ${
               position === 'top'
-                ? 'border-t-stone-950 border-l-8 border-r-8 border-t-8'
+                ? `border-t-${color} border-l-8 border-r-8 border-t-8`
                 : position === 'bottom'
-                ? 'border-b-stone-950 border-l-8 border-r-8 border-b-8'
+                ? `border-b-${color} border-l-8 border-r-8 border-b-8`
                 : position === 'left'
-                ? 'border-l-stone-950 border-t-8 border-b-8 border-l-8'
-                : 'border-r-stone-950 border-t-8 border-b-8 border-r-8'
+                ? `border-l-${color} border-t-8 border-b-8 border-l-8`
+                : `border-r-${color} border-t-8 border-b-8 border-r-8`
             }`}
             style={{
               top:
